@@ -1,0 +1,17 @@
+{
+  "name": "physics-friction-simulation",
+  "version": "1.0.0",
+  "description": "สื่อการเรียนรู้เชิงปฏิสัมพันธ์ เรื่องแรงเสียดทาน (Physics Friction Simulation)",
+  "main": "index.html",
+  "scripts": {
+    "test": "node test.js"
+  },
+  "keywords": [
+    "physics",
+    "simulation",
+    "friction",
+    "education"
+  ],
+  "author": "KhunSiwa",
+  "license": "MIT"
+}

@@ -1,0 +1,1652 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>การจำลองทางฟิสิกส์ — แรงเสียดทาน</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background-color: #f8fafc;
+        }
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+        input[type=range] {
+            height: 6px;
+            border-radius: 999px;
+            outline: none;
+        }
+        .tab-active {
+            border-bottom: 3px solid #2563eb;
+            color: #1e40af;
+            font-weight: 600;
+        }
+        .tab-inactive {
+            border-bottom: 3px solid transparent;
+            color: #64748b;
+            font-weight: 500;
+        }
+        .tab-inactive:hover {
+            color: #334155;
+            border-bottom: 3px solid #cbd5e1;
+        }
+    </style>
+</head>
+<body class="h-screen w-full flex flex-col text-slate-800 overflow-hidden">
+
+    <!-- ส่วนหัวโปรแกรม -->
+    <header class="bg-white shadow-sm shrink-0 z-20">
+        <div class="px-6 py-4 flex items-center gap-3 border-b border-slate-100">
+            <div class="bg-blue-600 p-2 rounded-lg text-white shadow-sm">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 21v-8.25M15.75 21v-8.25M8.25 21v-8.25M3 9l9-6 9 6m-1.5 12V10.332A48.36 48.36 0 0 0 12 9.75c-2.551 0-5.056.2-7.5.582V21M3 21h18M12 6.75h.008v.008H12V6.75Z" />
+                </svg>
+            </div>
+            <div>
+                <h1 class="text-2xl font-bold text-slate-800 tracking-tight">การจำลองทางฟิสิกส์ — <span class="text-blue-600">แรงเสียดทาน</span></h1>
+                <p class="text-xs text-slate-500">สื่อการเรียนรู้เชิงปฏิสัมพันธ์ เรื่องแรงเสียดทานสถิตและแรงเสียดทานจลน์</p>
+            </div>
+        </div>
+        <div class="px-6 flex gap-6">
+            <button id="btn-tab-h" class="pb-3 pt-3 px-2 transition-all tab-active text-lg cursor-pointer">พื้นราบ</button>
+            <button id="btn-tab-i" class="pb-3 pt-3 px-2 transition-all tab-inactive text-lg cursor-pointer">พื้นเอียง</button>
+            <button id="btn-tab-q" class="pb-3 pt-3 px-2 transition-all tab-inactive text-lg cursor-pointer">แบบทดสอบ</button>
+        </div>
+    </header>
+
+    <!-- พื้นที่เนื้อหาหลัก -->
+    <main class="flex-1 overflow-hidden relative">
+
+        <!-- =================== มุมมอง: พื้นราบ =================== -->
+        <div id="view-h" class="absolute inset-0 flex flex-col md:flex-row p-4 gap-4 bg-slate-50 transition-opacity duration-300">
+            <!-- ฝั่งซ้าย: ภาพการจำลองและผลลัพธ์ -->
+            <div class="flex-1 flex flex-col min-w-0 gap-4 overflow-y-auto pr-1">
+                <!-- กรอบ Canvas จำลอง -->
+                <div class="h-80 sm:h-96 md:h-[420px] shrink-0 bg-white rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden flex flex-col" id="container-h">
+                    <div class="absolute top-4 left-4 z-10 bg-white/90 backdrop-blur px-4 py-2 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 shadow-sm flex items-center gap-3">
+                        <div id="status-ind-h" class="w-3 h-3 rounded-full bg-slate-400"></div>
+                        <span id="status-text-h">สถานะ: วัตถุไม่เคลื่อนที่</span>
+                    </div>
+                    <canvas id="canvas-h"></canvas>
+                </div>
+
+                <!-- ค่าผลการคำนวณ 6 ช่อง -->
+                <div class="shrink-0 grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3">
+                    <div class="bg-white rounded-xl border border-slate-200 p-3 shadow-sm flex flex-col justify-center text-center">
+                        <span class="text-xs font-semibold text-slate-500 mb-1">แรงปฏิกิริยาตั้งฉาก (N)</span>
+                        <div class="text-xl font-bold text-slate-800"><span id="out-h-n">0.0</span> N</div>
+                    </div>
+                    <div class="bg-white rounded-xl border border-slate-200 p-3 shadow-sm flex flex-col justify-center text-center">
+                        <span class="text-xs font-semibold text-slate-500 mb-1">แรงเสียดทานสถิตสูงสุด (fs)</span>
+                        <div class="text-xl font-bold text-slate-800"><span id="out-h-fsmax">0.0</span> N</div>
+                    </div>
+                    <div class="bg-orange-50 rounded-xl border border-orange-200 p-3 shadow-sm flex flex-col justify-center text-center">
+                        <span class="text-xs font-semibold text-orange-600 mb-1">แรงเสียดทานจลน์ (fk)</span>
+                        <div class="text-xl font-bold text-orange-700"><span id="out-h-fk">0.0</span> N</div>
+                    </div>
+                    <div class="bg-blue-50 rounded-xl border border-blue-200 p-3 shadow-sm flex flex-col justify-center text-center">
+                        <span class="text-xs font-semibold text-blue-600 mb-1">แรงลัพธ์ (Fลัพธ์)</span>
+                        <div class="text-xl font-bold text-blue-700"><span id="out-h-fnet">0.0</span> N</div>
+                    </div>
+                    <div class="bg-purple-50 rounded-xl border border-purple-200 p-3 shadow-sm flex flex-col justify-center text-center">
+                        <span class="text-xs font-semibold text-purple-600 mb-1">ความเร่ง (a)</span>
+                        <div class="text-xl font-bold text-purple-700"><span id="out-h-a">0.00</span> m/s²</div>
+                    </div>
+                    <div class="bg-emerald-50 rounded-xl border border-emerald-200 p-3 shadow-sm flex flex-col justify-center text-center">
+                        <span class="text-xs font-semibold text-emerald-600 mb-1">ความเร็ว (v)</span>
+                        <div class="text-xl font-bold text-emerald-700"><span id="out-h-v">0.00</span> m/s</div>
+                    </div>
+                </div>
+
+                <!-- กล่องผลการทดลอง & สรุปผล -->
+                <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4 shrink-0">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <h3 class="font-bold text-slate-800 text-lg flex items-center gap-2">
+                            <svg class="w-5 h-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            ผลการทดลอง
+                        </h3>
+                        <span id="badge-h" class="text-xs font-semibold px-3 py-1 rounded-full bg-slate-100 text-slate-700">วัตถุไม่เคลื่อนที่</span>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
+                        <div class="p-3 bg-slate-50 border border-slate-100 rounded-xl">
+                            <div class="text-xs text-slate-500 font-semibold mb-1">สถานะการเคลื่อนที่</div>
+                            <div id="res-status-h" class="font-bold text-slate-800 text-base">วัตถุไม่เคลื่อนที่</div>
+                        </div>
+                        <div class="p-3 bg-blue-50/60 border border-blue-100 rounded-xl">
+                            <div class="text-xs text-blue-600 font-semibold mb-1">แรงลัพธ์ที่กระทำต่อวัตถุ</div>
+                            <div class="font-bold text-blue-900 text-base"><span id="res-fnet-h">0.00</span> N</div>
+                        </div>
+                        <div class="p-3 bg-purple-50/60 border border-purple-100 rounded-xl">
+                            <div class="text-xs text-purple-600 font-semibold mb-1">ความเร่งที่เกิดขึ้น</div>
+                            <div class="font-bold text-purple-900 text-base"><span id="res-a-h">0.00</span> m/s²</div>
+                        </div>
+                    </div>
+                    <div class="p-4 rounded-xl bg-blue-50 border border-blue-100 text-sm text-blue-950 flex items-start gap-3">
+                        <svg class="w-5 h-5 text-blue-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <div>
+                            <span class="font-bold text-blue-900">สรุปผลการทดลอง: </span>
+                            <span id="desc-h" class="text-slate-700">วัตถุไม่เคลื่อนที่ เพราะแรงที่พยายามทำให้วัตถุเคลื่อนที่ยังไม่มากกว่าแรงเสียดทานสถิตสูงสุด</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- วิธีคำนวณทีละขั้น -->
+                <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm shrink-0">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-lg flex items-center gap-2">
+                                <svg class="w-5 h-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                                วิธีคำนวณ
+                            </h3>
+                            <p class="text-xs text-slate-500">แสดงขั้นตอนการคำนวณตัวเลขทางฟิสิกส์ทีละขั้นจากค่าจริง</p>
+                        </div>
+                        <button id="btn-calc-h" class="px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold rounded-xl text-sm transition-all shadow-sm active:scale-95 flex items-center gap-1.5 cursor-pointer">
+                            <span id="btn-calc-text-h">ดูวิธีคำนวณ</span>
+                        </button>
+                    </div>
+                    <div id="box-calc-h" class="hidden mt-4 pt-4 border-t border-slate-100 font-mono text-sm space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200 text-slate-800">
+                        <!-- สร้างไดนามิกตามค่าตัวแปรจริง -->
+                    </div>
+                </div>
+
+                <!-- ตรวจสอบผลการทดลอง -->
+                <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-3 shrink-0 mb-4">
+                    <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
+                        <svg class="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                        ตรวจสอบผลการทดลอง
+                    </h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                        <div class="p-3 bg-emerald-50/70 border border-emerald-100 rounded-xl">
+                            <div class="text-xs text-emerald-700 font-semibold mb-1">ค่าความเร่งจากการคำนวณด้วยมือ</div>
+                            <div id="chk-manual-h" class="text-xl font-bold text-emerald-900">3.00 m/s²</div>
+                            <div class="text-xs text-emerald-600 mt-1">คำนวณจากสูตร a = Fลัพธ์ / m</div>
+                        </div>
+                        <div class="p-3 bg-blue-50/70 border border-blue-100 rounded-xl">
+                            <div class="text-xs text-blue-700 font-semibold mb-1">ค่าความเร่งจากการจำลอง</div>
+                            <div id="chk-sim-h" class="text-xl font-bold text-blue-900">0.00 m/s²</div>
+                            <div class="text-xs text-blue-600 mt-1">ค่าที่วัดได้จริงจากโปรแกรมจำลอง</div>
+                        </div>
+                    </div>
+                    <div class="text-xs text-slate-500 flex items-center gap-1.5 pt-1">
+                        <svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        <span>ค่าทั้งสองควรใกล้เคียงกัน</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ฝั่งขวา: แผงควบคุมและหลักการที่ใช้ -->
+            <div class="w-full md:w-80 lg:w-96 bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col shrink-0 overflow-hidden">
+                <div class="p-4 border-b border-slate-100 bg-slate-50/50 flex gap-2 justify-center">
+                    <button id="btn-play-h" class="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-xl font-semibold transition-all shadow-sm active:scale-95 text-sm cursor-pointer">เริ่มการทดลอง</button>
+                    <button id="btn-pause-h" class="flex-1 hidden items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white py-2.5 rounded-xl font-semibold transition-all shadow-sm active:scale-95 text-sm cursor-pointer">หยุดชั่วคราว</button>
+                    <button id="btn-reset-h" class="flex-1 flex items-center justify-center gap-2 bg-slate-600 hover:bg-slate-700 text-white py-2.5 rounded-xl font-semibold transition-all shadow-sm active:scale-95 text-sm cursor-pointer">เริ่มใหม่</button>
+                </div>
+                <div class="p-5 flex-1 overflow-y-auto space-y-5">
+                    <!-- มวล -->
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="text-sm font-semibold text-slate-700">มวล (m)</label>
+                            <span class="text-sm font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md" id="val-h-m">5 kg</span>
+                        </div>
+                        <input type="range" id="in-h-m" min="1" max="50" step="1" value="5" class="w-full accent-blue-600 cursor-pointer">
+                    </div>
+                    <!-- แรงภายนอก -->
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="text-sm font-semibold text-slate-700">แรงภายนอก (F)</label>
+                            <span class="text-sm font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded-md" id="val-h-f">10 N</span>
+                        </div>
+                        <input type="range" id="in-h-f" min="-100" max="100" step="1" value="10" class="w-full accent-red-600 cursor-pointer">
+                    </div>
+                    <div class="border-t border-slate-100"></div>
+                    <!-- สัมประสิทธิ์ความเสียดทาน -->
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="text-sm font-semibold text-slate-700">สัมประสิทธิ์ความเสียดทานสถิต (μs)</label>
+                            <span class="text-sm font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md" id="val-h-us">0.4</span>
+                        </div>
+                        <input type="range" id="in-h-us" min="0" max="1" step="0.05" value="0.4" class="w-full accent-slate-600 cursor-pointer">
+                    </div>
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="text-sm font-semibold text-slate-700">สัมประสิทธิ์ความเสียดทานจลน์ (μk)</label>
+                            <span class="text-sm font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md" id="val-h-uk">0.2</span>
+                        </div>
+                        <input type="range" id="in-h-uk" min="0" max="1" step="0.05" value="0.2" class="w-full accent-slate-500 cursor-pointer">
+                    </div>
+                    <div class="border-t border-slate-100"></div>
+                    <!-- ความเร่งโน้มถ่วง -->
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="text-sm font-semibold text-slate-700">ความเร่งโน้มถ่วง (g)</label>
+                            <span class="text-sm font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md" id="val-h-g">10 m/s²</span>
+                        </div>
+                        <input type="range" id="in-h-g" min="1" max="20" step="0.1" value="10" class="w-full accent-slate-600 cursor-pointer">
+                    </div>
+
+                    <!-- กล่อง: หลักการที่ใช้ -->
+                    <div class="border-t border-slate-100 pt-4">
+                        <div class="bg-blue-50/70 border border-blue-200 rounded-xl p-4 space-y-3">
+                            <h4 class="font-bold text-blue-900 text-sm flex items-center gap-2">
+                                <svg class="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                                หลักการที่ใช้
+                            </h4>
+                            <div class="space-y-2.5 text-xs text-slate-700">
+                                <div>
+                                    <div class="font-mono font-bold text-blue-800">N = mg</div>
+                                    <div class="text-slate-600 mt-0.5">แรงปฏิกิริยาตั้งฉากเท่ากับน้ำหนักของวัตถุบนพื้นราบ</div>
+                                </div>
+                                <div>
+                                    <div class="font-mono font-bold text-blue-800">fs(max) = μsN</div>
+                                    <div class="text-slate-600 mt-0.5">แรงเสียดทานสถิตสูงสุด คือแรงต้านสูงสุดก่อนที่วัตถุจะเริ่มเคลื่อนที่</div>
+                                </div>
+                                <div>
+                                    <div class="font-mono font-bold text-blue-800">fk = μkN</div>
+                                    <div class="text-slate-600 mt-0.5">แรงเสียดทานจลน์ คือแรงต้านขณะที่วัตถุกำลังเคลื่อนที่</div>
+                                </div>
+                                <div>
+                                    <div class="font-mono font-bold text-blue-800">Fลัพธ์ = F - fk</div>
+                                    <div class="text-slate-600 mt-0.5">แรงลัพธ์ในแนวราบเมื่อวัตถุเคลื่อนที่</div>
+                                </div>
+                                <div>
+                                    <div class="font-mono font-bold text-blue-800">a = Fลัพธ์ / m</div>
+                                    <div class="text-slate-600 mt-0.5">ความเร่งตามกฎการเคลื่อนที่ข้อที่ 2 ของนิวตัน</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- =================== มุมมอง: พื้นเอียง =================== -->
+        <div id="view-i" class="absolute inset-0 flex flex-col md:flex-row p-4 gap-4 bg-slate-50 opacity-0 pointer-events-none transition-opacity duration-300">
+            <!-- ฝั่งซ้าย: ภาพการจำลองและผลลัพธ์ -->
+            <div class="flex-1 flex flex-col min-w-0 gap-4 overflow-y-auto pr-1">
+                <!-- กรอบ Canvas จำลอง -->
+                <div class="h-80 sm:h-96 md:h-[420px] shrink-0 bg-white rounded-2xl shadow-sm border border-slate-200 relative overflow-hidden flex flex-col" id="container-i">
+                    <div class="absolute top-4 left-4 z-10 bg-white/90 backdrop-blur px-4 py-2 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 shadow-sm flex items-center gap-3">
+                        <div id="status-ind-i" class="w-3 h-3 rounded-full bg-slate-400"></div>
+                        <span id="status-text-i">สถานะ: วัตถุไม่เคลื่อนที่</span>
+                    </div>
+                    <canvas id="canvas-i"></canvas>
+                </div>
+
+                <!-- ค่าผลการคำนวณ 6 ช่อง -->
+                <div class="shrink-0 grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3">
+                    <div class="bg-white rounded-xl border border-slate-200 p-3 shadow-sm flex flex-col justify-center text-center">
+                        <span class="text-xs font-semibold text-slate-500 mb-1">แรงปฏิกิริยาตั้งฉาก (N)</span>
+                        <div class="text-xl font-bold text-slate-800"><span id="out-i-n">0.0</span> N</div>
+                    </div>
+                    <div class="bg-white rounded-xl border border-slate-200 p-3 shadow-sm flex flex-col justify-center text-center">
+                        <span class="text-xs font-semibold text-slate-500 mb-1">องค์ประกอบแรงโน้มถ่วง</span>
+                        <div class="text-xl font-bold text-slate-800"><span id="out-i-mgsin">0.0</span> N</div>
+                    </div>
+                    <div class="bg-orange-50 rounded-xl border border-orange-200 p-3 shadow-sm flex flex-col justify-center text-center">
+                        <span class="text-xs font-semibold text-orange-600 mb-1">แรงเสียดทาน (f)</span>
+                        <div class="text-xl font-bold text-orange-700"><span id="out-i-f">0.0</span> N</div>
+                    </div>
+                    <div class="bg-blue-50 rounded-xl border border-blue-200 p-3 shadow-sm flex flex-col justify-center text-center">
+                        <span class="text-xs font-semibold text-blue-600 mb-1">แรงลัพธ์ (Fลัพธ์)</span>
+                        <div class="text-xl font-bold text-blue-700"><span id="out-i-fnet">0.0</span> N</div>
+                    </div>
+                    <div class="bg-purple-50 rounded-xl border border-purple-200 p-3 shadow-sm flex flex-col justify-center text-center">
+                        <span class="text-xs font-semibold text-purple-600 mb-1">ความเร่ง (a)</span>
+                        <div class="text-xl font-bold text-purple-700"><span id="out-i-a">0.00</span> m/s²</div>
+                    </div>
+                    <div class="bg-emerald-50 rounded-xl border border-emerald-200 p-3 shadow-sm flex flex-col justify-center text-center">
+                        <span class="text-xs font-semibold text-emerald-600 mb-1">ความเร็ว (v)</span>
+                        <div class="text-xl font-bold text-emerald-700"><span id="out-i-v">0.00</span> m/s</div>
+                    </div>
+                </div>
+
+                <!-- กล่องผลการทดลอง & สรุปผล -->
+                <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4 shrink-0">
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                        <h3 class="font-bold text-slate-800 text-lg flex items-center gap-2">
+                            <svg class="w-5 h-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                            ผลการทดลอง
+                        </h3>
+                        <span id="badge-i" class="text-xs font-semibold px-3 py-1 rounded-full bg-slate-100 text-slate-700">วัตถุไม่เคลื่อนที่</span>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
+                        <div class="p-3 bg-slate-50 border border-slate-100 rounded-xl">
+                            <div class="text-xs text-slate-500 font-semibold mb-1">สถานะการเคลื่อนที่</div>
+                            <div id="res-status-i" class="font-bold text-slate-800 text-base">วัตถุไม่เคลื่อนที่</div>
+                        </div>
+                        <div class="p-3 bg-blue-50/60 border border-blue-100 rounded-xl">
+                            <div class="text-xs text-blue-600 font-semibold mb-1">แรงลัพธ์ตามแนวพื้นเอียง</div>
+                            <div class="font-bold text-blue-900 text-base"><span id="res-fnet-i">0.00</span> N</div>
+                        </div>
+                        <div class="p-3 bg-purple-50/60 border border-purple-100 rounded-xl">
+                            <div class="text-xs text-purple-600 font-semibold mb-1">ความเร่งที่เกิดขึ้น</div>
+                            <div class="font-bold text-purple-900 text-base"><span id="res-a-i">0.00</span> m/s²</div>
+                        </div>
+                    </div>
+                    <div class="p-4 rounded-xl bg-indigo-50 border border-indigo-100 text-sm text-indigo-950 flex items-start gap-3">
+                        <svg class="w-5 h-5 text-indigo-600 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        <div>
+                            <span class="font-bold text-indigo-900">สรุปผลการทดลอง: </span>
+                            <span id="desc-i" class="text-slate-700">วัตถุไม่เคลื่อนที่ เพราะองค์ประกอบของแรงโน้มถ่วงตามแนวพื้นเอียงยังไม่มากกว่าแรงเสียดทานสถิตสูงสุด</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- วิธีคำนวณทีละขั้น -->
+                <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm shrink-0">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-lg flex items-center gap-2">
+                                <svg class="w-5 h-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+                                วิธีคำนวณ
+                            </h3>
+                            <p class="text-xs text-slate-500">แสดงขั้นตอนการคำนวณตัวเลขทางฟิสิกส์ทีละขั้นจากค่าจริง</p>
+                        </div>
+                        <button id="btn-calc-i" class="px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold rounded-xl text-sm transition-all shadow-sm active:scale-95 flex items-center gap-1.5 cursor-pointer">
+                            <span id="btn-calc-text-i">ดูวิธีคำนวณ</span>
+                        </button>
+                    </div>
+                    <div id="box-calc-i" class="hidden mt-4 pt-4 border-t border-slate-100 font-mono text-sm space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200 text-slate-800">
+                        <!-- สร้างไดนามิกตามค่าตัวแปรจริง -->
+                    </div>
+                </div>
+
+                <!-- ตรวจสอบผลการทดลอง -->
+                <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-3 shrink-0 mb-4">
+                    <h3 class="font-bold text-slate-800 text-base flex items-center gap-2">
+                        <svg class="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                        ตรวจสอบผลการทดลอง
+                    </h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                        <div class="p-3 bg-emerald-50/70 border border-emerald-100 rounded-xl">
+                            <div class="text-xs text-emerald-700 font-semibold mb-1">ค่าความเร่งจากการคำนวณตามทฤษฎี</div>
+                            <div id="chk-manual-i" class="text-xl font-bold text-emerald-900">3.27 m/s²</div>
+                            <div class="text-xs text-emerald-600 mt-1">คำนวณจากสูตร a = g(sinθ - μk cosθ)</div>
+                        </div>
+                        <div class="p-3 bg-blue-50/70 border border-blue-100 rounded-xl">
+                            <div class="text-xs text-blue-700 font-semibold mb-1">ค่าความเร่งจากการจำลอง</div>
+                            <div id="chk-sim-i" class="text-xl font-bold text-blue-900">0.00 m/s²</div>
+                            <div class="text-xs text-blue-600 mt-1">ค่าที่วัดได้จริงจากโปรแกรมจำลอง</div>
+                        </div>
+                    </div>
+                    <div class="text-xs text-slate-500 flex items-center gap-1.5 pt-1">
+                        <svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        <span>ค่าทั้งสองควรใกล้เคียงกัน</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ฝั่งขวา: แผงควบคุมและหลักการที่ใช้ -->
+            <div class="w-full md:w-80 lg:w-96 bg-white rounded-2xl shadow-sm border border-slate-200 flex flex-col shrink-0 overflow-hidden">
+                <div class="p-4 border-b border-slate-100 bg-slate-50/50 flex gap-2 justify-center">
+                    <button id="btn-play-i" class="flex-1 flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-xl font-semibold transition-all shadow-sm active:scale-95 text-sm cursor-pointer">เริ่มการทดลอง</button>
+                    <button id="btn-pause-i" class="flex-1 hidden items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white py-2.5 rounded-xl font-semibold transition-all shadow-sm active:scale-95 text-sm cursor-pointer">หยุดชั่วคราว</button>
+                    <button id="btn-reset-i" class="flex-1 flex items-center justify-center gap-2 bg-slate-600 hover:bg-slate-700 text-white py-2.5 rounded-xl font-semibold transition-all shadow-sm active:scale-95 text-sm cursor-pointer">เริ่มใหม่</button>
+                </div>
+                <div class="p-5 flex-1 overflow-y-auto space-y-5">
+                    <!-- มวล -->
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="text-sm font-semibold text-slate-700">มวล (m)</label>
+                            <span class="text-sm font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-md" id="val-i-m">5 kg</span>
+                        </div>
+                        <input type="range" id="in-i-m" min="1" max="50" step="1" value="5" class="w-full accent-blue-600 cursor-pointer">
+                    </div>
+                    <!-- มุมพื้นเอียง -->
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="text-sm font-semibold text-slate-700">มุมพื้นเอียง (θ)</label>
+                            <span class="text-sm font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-md" id="val-i-th">30°</span>
+                        </div>
+                        <input type="range" id="in-i-th" min="0" max="60" step="1" value="30" class="w-full accent-indigo-600 cursor-pointer">
+                    </div>
+                    <div class="border-t border-slate-100"></div>
+                    <!-- สัมประสิทธิ์ความเสียดทาน -->
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="text-sm font-semibold text-slate-700">สัมประสิทธิ์ความเสียดทานสถิต (μs)</label>
+                            <span class="text-sm font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md" id="val-i-us">0.4</span>
+                        </div>
+                        <input type="range" id="in-i-us" min="0" max="1" step="0.05" value="0.4" class="w-full accent-slate-600 cursor-pointer">
+                    </div>
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="text-sm font-semibold text-slate-700">สัมประสิทธิ์ความเสียดทานจลน์ (μk)</label>
+                            <span class="text-sm font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md" id="val-i-uk">0.2</span>
+                        </div>
+                        <input type="range" id="in-i-uk" min="0" max="1" step="0.05" value="0.2" class="w-full accent-slate-500 cursor-pointer">
+                    </div>
+                    <div class="border-t border-slate-100"></div>
+                    <!-- ความเร่งโน้มถ่วง -->
+                    <div>
+                        <div class="flex justify-between items-center mb-2">
+                            <label class="text-sm font-semibold text-slate-700">ความเร่งโน้มถ่วง (g)</label>
+                            <span class="text-sm font-bold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-md" id="val-i-g">10 m/s²</span>
+                        </div>
+                        <input type="range" id="in-i-g" min="1" max="20" step="0.1" value="10" class="w-full accent-slate-600 cursor-pointer">
+                    </div>
+
+                    <!-- กล่อง: หลักการที่ใช้ -->
+                    <div class="border-t border-slate-100 pt-4">
+                        <div class="bg-indigo-50/70 border border-indigo-200 rounded-xl p-4 space-y-3">
+                            <h4 class="font-bold text-indigo-900 text-sm flex items-center gap-2">
+                                <svg class="w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                                หลักการที่ใช้
+                            </h4>
+                            <div class="space-y-2.5 text-xs text-slate-700">
+                                <div>
+                                    <div class="font-mono font-bold text-indigo-800">N = mg cosθ</div>
+                                    <div class="text-slate-600 mt-0.5">แรงปฏิกิริยาตั้งฉากในแนวตั้งฉากกับพื้นเอียง</div>
+                                </div>
+                                <div>
+                                    <div class="font-mono font-bold text-indigo-800">mg sinθ</div>
+                                    <div class="text-slate-600 mt-0.5">องค์ประกอบของแรงโน้มถ่วงตามแนวพื้นเอียง (แรงดึงลง)</div>
+                                </div>
+                                <div>
+                                    <div class="font-mono font-bold text-indigo-800">fs(max) = μsN</div>
+                                    <div class="text-slate-600 mt-0.5">แรงเสียดทานสถิตสูงสุดตามแนวพื้นเอียง</div>
+                                </div>
+                                <div>
+                                    <div class="font-mono font-bold text-indigo-800">fk = μkN</div>
+                                    <div class="text-slate-600 mt-0.5">แรงเสียดทานจลน์ต้านการไถลลงตามพื้นเอียง</div>
+                                </div>
+                                <div>
+                                    <div class="font-mono font-bold text-indigo-800">Fลัพธ์ = mg sinθ - fk</div>
+                                    <div class="text-slate-600 mt-0.5">แรงลัพธ์ตามแนวพื้นเอียงเมื่อวัตถุเคลื่อนที่ลง</div>
+                                </div>
+                                <div>
+                                    <div class="font-mono font-bold text-indigo-800">a = Fลัพธ์ / m</div>
+                                    <div class="text-slate-600 mt-0.5">ความเร่งของวัตถุขณะเคลื่อนที่ลงตามพื้นเอียง</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- =================== มุมมอง: แบบทดสอบ =================== -->
+        <div id="view-q" class="absolute inset-0 flex flex-col p-6 bg-slate-50 opacity-0 pointer-events-none transition-opacity duration-300 overflow-y-auto">
+            <div class="max-w-5xl mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-6 pb-8">
+                <!-- ส่วน: แบบทดสอบ -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8 flex flex-col h-full">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+                        <svg class="w-7 h-7 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        แบบทดสอบ
+                    </h2>
+
+                    <div class="space-y-6 flex-1">
+                        <!-- ข้อ 1 -->
+                        <div class="bg-slate-50 p-6 rounded-xl border border-slate-200">
+                            <h3 class="font-bold text-lg text-slate-800 mb-2">ข้อ 1 — พื้นราบ</h3>
+                            <p class="text-slate-700 mb-4 font-mono bg-white p-3 rounded-lg border border-slate-200 text-sm">
+                                m = 5 kg<br>
+                                F = 10 N<br>
+                                μs = 0.4<br>
+                                g = 10 m/s²
+                            </p>
+                            <p class="font-semibold text-slate-700 mb-3">คำถาม: วัตถุควรเคลื่อนที่หรือไม่?</p>
+                            <div class="space-y-2">
+                                <label class="flex items-center gap-3 p-3 bg-white border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-100 transition-colors">
+                                    <input type="radio" name="q1" value="move" class="w-5 h-5 accent-blue-600">
+                                    <span class="text-slate-800">วัตถุเคลื่อนที่</span>
+                                </label>
+                                <label class="flex items-center gap-3 p-3 bg-white border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-100 transition-colors">
+                                    <input type="radio" name="q1" value="stop" class="w-5 h-5 accent-blue-600">
+                                    <span class="text-slate-800">วัตถุไม่เคลื่อนที่</span>
+                                </label>
+                            </div>
+                            <div id="res-q1" class="mt-3 hidden font-semibold text-sm"></div>
+                        </div>
+
+                        <!-- ข้อ 2 -->
+                        <div class="bg-slate-50 p-6 rounded-xl border border-slate-200">
+                            <h3 class="font-bold text-lg text-slate-800 mb-2">ข้อ 2 — พื้นเอียง</h3>
+                            <p class="text-slate-700 mb-4 font-mono bg-white p-3 rounded-lg border border-slate-200 text-sm">
+                                m = 5 kg<br>
+                                θ = 30°<br>
+                                μs = 0.4<br>
+                                g = 10 m/s²
+                            </p>
+                            <p class="font-semibold text-slate-700 mb-3">คำถาม: วัตถุควรเคลื่อนที่หรือไม่?</p>
+                            <div class="space-y-2">
+                                <label class="flex items-center gap-3 p-3 bg-white border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-100 transition-colors">
+                                    <input type="radio" name="q2" value="move" class="w-5 h-5 accent-blue-600">
+                                    <span class="text-slate-800">วัตถุเคลื่อนที่</span>
+                                </label>
+                                <label class="flex items-center gap-3 p-3 bg-white border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-100 transition-colors">
+                                    <input type="radio" name="q2" value="stop" class="w-5 h-5 accent-blue-600">
+                                    <span class="text-slate-800">วัตถุไม่เคลื่อนที่</span>
+                                </label>
+                            </div>
+                            <div id="res-q2" class="mt-3 hidden font-semibold text-sm"></div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 pt-6 border-t border-slate-200">
+                        <button id="btn-check-quiz" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-sm transition-all active:scale-95 text-lg cursor-pointer">
+                            ตรวจคำตอบ
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ส่วน: การทดลองตามใบงาน -->
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 sm:p-8 flex flex-col h-full">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+                        <svg class="w-7 h-7 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"></path></svg>
+                        การทดลองตามใบงาน
+                    </h2>
+
+                    <div class="space-y-6 flex-1">
+                        <!-- การทดลองที่ 1 -->
+                        <div class="bg-purple-50 p-6 rounded-xl border border-purple-200">
+                            <h3 class="font-bold text-lg text-purple-900 mb-2">การทดลองที่ 1 — พื้นราบ</h3>
+                            <div class="text-slate-700 mb-3 font-mono bg-white p-3 rounded-lg border border-purple-200 text-sm">
+                                กำหนด:<br>
+                                m = 2 kg<br>
+                                F = 10 N<br>
+                                μs = 0.4<br>
+                                μk = 0.2<br>
+                                g = 10 m/s²
+                            </div>
+                            <p class="font-semibold text-slate-700 mb-4 text-sm">ทดลองโดยใช้ค่าที่กำหนด แล้วบันทึกค่าความเร่งที่ได้</p>
+                            <button id="btn-load-exp1" class="w-full py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl shadow-sm transition-all active:scale-95 cursor-pointer">
+                                ใช้ค่าจากใบงาน
+                            </button>
+                        </div>
+
+                        <!-- การทดลองที่ 2 -->
+                        <div class="bg-purple-50 p-6 rounded-xl border border-purple-200">
+                            <h3 class="font-bold text-lg text-purple-900 mb-2">การทดลองที่ 2 — พื้นเอียง</h3>
+                            <div class="text-slate-700 mb-3 font-mono bg-white p-3 rounded-lg border border-purple-200 text-sm">
+                                กำหนด:<br>
+                                m = 2 kg<br>
+                                θ = 30°<br>
+                                μs = 0.4<br>
+                                μk = 0.2<br>
+                                g = 10 m/s²
+                            </div>
+                            <p class="font-semibold text-slate-700 mb-4 text-sm">ทดลองโดยใช้ค่าที่กำหนด แล้วบันทึกค่าความเร่งที่ได้</p>
+                            <button id="btn-load-exp2" class="w-full py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl shadow-sm transition-all active:scale-95 cursor-pointer">
+                                ใช้ค่าจากใบงาน
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        // --- ระบบสลับแท็บ ---
+        const tabs = {
+            h: document.getElementById('btn-tab-h'),
+            i: document.getElementById('btn-tab-i'),
+            q: document.getElementById('btn-tab-q')
+        };
+        const views = {
+            h: document.getElementById('view-h'),
+            i: document.getElementById('view-i'),
+            q: document.getElementById('view-q')
+        };
+        
+        let activeTab = 'h';
+
+        function switchTab(tabId) {
+            activeTab = tabId;
+            Object.keys(tabs).forEach(k => {
+                if (k === tabId) {
+                    tabs[k].className = "pb-3 pt-3 px-2 transition-all tab-active text-lg cursor-pointer";
+                    views[k].classList.remove('opacity-0', 'pointer-events-none');
+                } else {
+                    tabs[k].className = "pb-3 pt-3 px-2 transition-all tab-inactive text-lg cursor-pointer";
+                    views[k].classList.add('opacity-0', 'pointer-events-none');
+                }
+            });
+            if (tabId !== 'h') resetH();
+            if (tabId !== 'i') resetI();
+            
+            if (tabId === 'h') resizeH();
+            if (tabId === 'i') resizeI();
+            setTimeout(() => {
+                if (tabId === 'h') resizeH();
+                if (tabId === 'i') resizeI();
+            }, 30);
+        }
+
+        tabs.h.addEventListener('click', () => switchTab('h'));
+        tabs.i.addEventListener('click', () => switchTab('i'));
+        tabs.q.addEventListener('click', () => switchTab('q'));
+
+
+        // --- ฟังก์ชันช่วยเหลือสำหรับการวาดแผนภาพฟิสิกส์ (Free-Body Diagram) ---
+        const toRad = (deg) => deg * Math.PI / 180;
+
+        // วาดข้อความพร้อมขอบขาวรอบตัวอักษรให้อ่านง่าย คมชัดทุกพื้นผิว
+        function drawPhysicsText(ctx, text, x, y, color = '#1e293b', font = 'bold 14px Sarabun, sans-serif', align = 'center', baseline = 'middle') {
+            ctx.save();
+            ctx.font = font;
+            ctx.textAlign = align;
+            ctx.textBaseline = baseline;
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 4;
+            ctx.lineJoin = 'round';
+            ctx.strokeText(text, x, y);
+            ctx.fillStyle = color;
+            ctx.fillText(text, x, y);
+            ctx.restore();
+        }
+
+        // วาดพื้นราบพร้อมลายแรเงา (Hatch Pattern) ใต้พื้นแบบชีทโจทย์ฟิสิกส์
+        function drawHatchGround(ctx, x1, x2, y, depth = 14, spacing = 18) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(x1, y);
+            ctx.lineTo(x2, y);
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.strokeStyle = '#94a3b8';
+            ctx.lineWidth = 1.5;
+            for (let gx = x1 + 10; gx <= x2 - 5; gx += spacing) {
+                ctx.moveTo(gx, y);
+                ctx.lineTo(gx - 10, y + depth);
+            }
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        // วาดลูกศรเวกเตอร์ Free-body diagram พร้อมหัวลูกศรคมชัดและป้ายกำกับ
+        function drawVectorArrow(ctx, fromX, fromY, toX, toY, color, label = '', labelSide = 'auto', offset = 14) {
+            const dx = toX - fromX;
+            const dy = toY - fromY;
+            const len = Math.hypot(dx, dy);
+            if (len < 2) return;
+
+            const angle = Math.atan2(dy, dx);
+            const headLen = Math.min(14, Math.max(8, len * 0.35));
+
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(fromX, fromY);
+            ctx.lineTo(toX, toY);
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 3.5;
+            ctx.lineCap = 'round';
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(toX, toY);
+            ctx.lineTo(toX - headLen * Math.cos(angle - Math.PI / 6), toY - headLen * Math.sin(angle - Math.PI / 6));
+            ctx.lineTo(toX - headLen * Math.cos(angle + Math.PI / 6), toY - headLen * Math.sin(angle + Math.PI / 6));
+            ctx.closePath();
+            ctx.fillStyle = color;
+            ctx.fill();
+
+            if (label) {
+                let tx = toX, ty = toY;
+                let align = 'center', baseline = 'middle';
+
+                if (labelSide === 'above') {
+                    ty = toY - offset;
+                    align = 'center';
+                    baseline = 'bottom';
+                } else if (labelSide === 'below') {
+                    ty = toY + offset;
+                    align = 'center';
+                    baseline = 'top';
+                } else if (labelSide === 'left') {
+                    tx = toX - offset;
+                    align = 'right';
+                    baseline = 'middle';
+                } else if (labelSide === 'right') {
+                    tx = toX + offset;
+                    align = 'left';
+                    baseline = 'middle';
+                } else {
+                    const nx = -Math.sin(angle);
+                    const ny = Math.cos(angle);
+                    tx = toX + nx * offset;
+                    ty = toY + ny * offset;
+                    align = nx > 0.3 ? 'left' : (nx < -0.3 ? 'right' : 'center');
+                    baseline = ny > 0.3 ? 'top' : (ny < -0.3 ? 'bottom' : 'middle');
+                }
+
+                drawPhysicsText(ctx, label, tx, ty, color, 'bold 13px Sarabun, sans-serif', align, baseline);
+            }
+            ctx.restore();
+        }
+
+
+        // ==========================================
+        // การจำลอง: พื้นราบ
+        // ==========================================
+        const sH = {
+            isRunning: false,
+            lastTime: 0,
+            x: 0, v: 0,
+            
+            cvs: document.getElementById('canvas-h'),
+            ctx: document.getElementById('canvas-h').getContext('2d'),
+            cont: document.getElementById('container-h'),
+            
+            inM: document.getElementById('in-h-m'), valM: document.getElementById('val-h-m'),
+            inF: document.getElementById('in-h-f'), valF: document.getElementById('val-h-f'),
+            inUs: document.getElementById('in-h-us'), valUs: document.getElementById('val-h-us'),
+            inUk: document.getElementById('in-h-uk'), valUk: document.getElementById('val-h-uk'),
+            inG: document.getElementById('in-h-g'), valG: document.getElementById('val-h-g'),
+            
+            outN: document.getElementById('out-h-n'),
+            outFsmax: document.getElementById('out-h-fsmax'),
+            outFk: document.getElementById('out-h-fk'),
+            outFnet: document.getElementById('out-h-fnet'),
+            outA: document.getElementById('out-h-a'),
+            outV: document.getElementById('out-h-v'),
+            
+            statInd: document.getElementById('status-ind-h'),
+            statTxt: document.getElementById('status-text-h'),
+            
+            badge: document.getElementById('badge-h'),
+            resStatus: document.getElementById('res-status-h'),
+            resFnet: document.getElementById('res-fnet-h'),
+            resA: document.getElementById('res-a-h'),
+            desc: document.getElementById('desc-h'),
+            
+            btnCalc: document.getElementById('btn-calc-h'),
+            btnCalcText: document.getElementById('btn-calc-text-h'),
+            boxCalc: document.getElementById('box-calc-h'),
+            
+            chkManual: document.getElementById('chk-manual-h'),
+            chkSim: document.getElementById('chk-sim-h'),
+            
+            btnPlay: document.getElementById('btn-play-h'),
+            btnPause: document.getElementById('btn-pause-h'),
+            btnReset: document.getElementById('btn-reset-h')
+        };
+
+        function resizeH() {
+            if(activeTab !== 'h') return;
+            const rect = sH.cont.getBoundingClientRect();
+            if (rect.width > 0 && rect.height > 0) {
+                sH.cvs.width = rect.width;
+                sH.cvs.height = rect.height;
+                drawH();
+            }
+        }
+        window.addEventListener('resize', resizeH);
+
+        function calcH() {
+            const m = parseFloat(sH.inM.value);
+            const F_app = parseFloat(sH.inF.value);
+            const us = parseFloat(sH.inUs.value);
+            const uk = parseFloat(sH.inUk.value);
+            const g = parseFloat(sH.inG.value);
+
+            const N = m * g;
+            const fs_max = us * N;
+            const fk = uk * N;
+            
+            let f = 0, Fnet = 0, a = 0;
+
+            if (Math.abs(sH.v) < 1e-4) { // หยุดนิ่ง
+                if (Math.abs(F_app) <= fs_max) {
+                    f = -F_app;
+                    Fnet = 0;
+                    a = 0;
+                } else {
+                    const dir = Math.sign(F_app);
+                    f = -dir * fk;
+                    Fnet = F_app + f;
+                    a = Fnet / m;
+                }
+            } else { // เคลื่อนที่
+                const dir = Math.sign(sH.v);
+                f = -dir * fk;
+                Fnet = F_app + f;
+                a = Fnet / m;
+            }
+
+            return { m, F_app, us, uk, g, N, fs_max, fk, f, Fnet, a };
+        }
+
+        function updateUIH(phys) {
+            sH.outN.textContent = phys.N.toFixed(1);
+            sH.outFsmax.textContent = phys.fs_max.toFixed(1);
+            sH.outFk.textContent = phys.fk.toFixed(1);
+            sH.outFnet.textContent = Math.abs(phys.Fnet).toFixed(1);
+            sH.outA.textContent = (Math.abs(phys.a) < 1e-4 ? 0 : phys.a).toFixed(2);
+            sH.outV.textContent = (Math.abs(sH.v) < 1e-4 ? 0 : sH.v).toFixed(2);
+
+            const isMoving = Math.abs(sH.v) > 0.05 || (Math.abs(phys.F_app) > phys.fs_max && Math.abs(phys.a) > 0);
+
+            if (isMoving) {
+                sH.statInd.className = "w-3 h-3 rounded-full bg-emerald-500 animate-pulse";
+                sH.statTxt.textContent = "สถานะ: วัตถุเคลื่อนที่";
+                sH.badge.className = "text-xs font-semibold px-3 py-1 rounded-full bg-emerald-100 text-emerald-800";
+                sH.badge.textContent = "วัตถุเคลื่อนที่";
+                sH.resStatus.textContent = "วัตถุเคลื่อนที่";
+                sH.desc.textContent = "วัตถุเริ่มเคลื่อนที่ เพราะแรงที่ทำให้วัตถุเคลื่อนที่มากกว่าแรงเสียดทานสถิตสูงสุด";
+            } else {
+                sH.statInd.className = "w-3 h-3 rounded-full bg-slate-400";
+                sH.statTxt.textContent = "สถานะ: วัตถุไม่เคลื่อนที่";
+                sH.badge.className = "text-xs font-semibold px-3 py-1 rounded-full bg-slate-100 text-slate-700";
+                sH.badge.textContent = "วัตถุไม่เคลื่อนที่";
+                sH.resStatus.textContent = "วัตถุไม่เคลื่อนที่";
+                sH.desc.textContent = "วัตถุไม่เคลื่อนที่ เพราะแรงที่พยายามทำให้วัตถุเคลื่อนที่ยังไม่มากกว่าแรงเสียดทานสถิตสูงสุด";
+            }
+
+            sH.resFnet.textContent = Math.abs(phys.Fnet).toFixed(2);
+            sH.resA.textContent = (Math.abs(phys.a) < 1e-4 ? 0 : phys.a).toFixed(2);
+
+            // ตรวจสอบผลการทดลอง
+            const manualA = (Math.abs(phys.F_app) > phys.fs_max) ? ((Math.abs(phys.F_app) - phys.fk) / phys.m) : 0;
+            sH.chkManual.textContent = manualA.toFixed(2) + " m/s²";
+            sH.chkSim.textContent = (Math.abs(phys.a) < 1e-4 ? 0 : phys.a).toFixed(2) + " m/s²";
+
+            // ปรับปรุงวิธีคำนวณทีละขั้น
+            renderCalcStepsH(phys);
+        }
+
+        function renderCalcStepsH(p) {
+            const isMove = Math.abs(p.F_app) > p.fs_max;
+            let html = '<div class="border-b border-slate-200 pb-2">' +
+                '<span class="text-blue-600 font-bold">ขั้นที่ 1: คำนวณแรงปฏิกิริยาตั้งฉาก (N)</span><br>' +
+                'N = mg = ' + p.m + ' × ' + p.g + ' = <span class="font-bold text-slate-900">' + p.N.toFixed(2) + ' N</span>' +
+                '</div>' +
+                '<div class="border-b border-slate-200 pb-2">' +
+                '<span class="text-blue-600 font-bold">ขั้นที่ 2: คำนวณแรงเสียดทานสถิตสูงสุด (fs(max))</span><br>' +
+                'fs(max) = μsN = ' + p.us + ' × ' + p.N.toFixed(2) + ' = <span class="font-bold text-slate-900">' + p.fs_max.toFixed(2) + ' N</span>' +
+                '</div>' +
+                '<div class="border-b border-slate-200 pb-2">' +
+                '<span class="text-blue-600 font-bold">ขั้นที่ 3: เปรียบเทียบแรงภายนอกกับแรงเสียดทานสถิตสูงสุด</span><br>' +
+                'แรงภายนอก |F| = ' + Math.abs(p.F_app).toFixed(2) + ' N ' + (isMove ? '>' : '≤') + ' fs(max) = ' + p.fs_max.toFixed(2) + ' N<br>' +
+                '<span class="font-bold ' + (isMove ? 'text-emerald-600' : 'text-amber-600') + '">ดังนั้น ' + (isMove ? 'วัตถุเคลื่อนที่' : 'วัตถุไม่เคลื่อนที่') + '</span>' +
+                '</div>';
+
+            if (isMove) {
+                html += '<div class="border-b border-slate-200 pb-2">' +
+                    '<span class="text-blue-600 font-bold">ขั้นที่ 4: คำนวณแรงเสียดทานจลน์ (fk)</span><br>' +
+                    'fk = μkN = ' + p.uk + ' × ' + p.N.toFixed(2) + ' = <span class="font-bold text-slate-900">' + p.fk.toFixed(2) + ' N</span>' +
+                    '</div>' +
+                    '<div class="border-b border-slate-200 pb-2">' +
+                    '<span class="text-blue-600 font-bold">ขั้นที่ 5: คำนวณแรงลัพธ์ (Fลัพธ์)</span><br>' +
+                    'Fลัพธ์ = |F| - fk = ' + Math.abs(p.F_app).toFixed(2) + ' - ' + p.fk.toFixed(2) + ' = <span class="font-bold text-slate-900">' + Math.abs(p.Fnet).toFixed(2) + ' N</span>' +
+                    '</div>' +
+                    '<div>' +
+                    '<span class="text-blue-600 font-bold">ขั้นที่ 6: คำนวณความเร่ง (a)</span><br>' +
+                    'a = Fลัพธ์ / m = ' + Math.abs(p.Fnet).toFixed(2) + ' / ' + p.m + ' = <span class="font-bold text-purple-700">' + p.a.toFixed(2) + ' m/s²</span>' +
+                    '</div>';
+            } else {
+                html += '<div>' +
+                    '<span class="text-blue-600 font-bold">ผลสรุป:</span><br>' +
+                    'แรงลัพธ์ Fลัพธ์ = 0.00 N<br>' +
+                    'ความเร่ง a = 0.00 m/s²' +
+                    '</div>';
+            }
+            sH.boxCalc.innerHTML = html;
+        }
+
+        sH.btnCalc.addEventListener('click', () => {
+            sH.boxCalc.classList.toggle('hidden');
+            sH.btnCalcText.textContent = sH.boxCalc.classList.contains('hidden') ? 'ดูวิธีคำนวณ' : 'ซ่อนวิธีคำนวณ';
+        });
+
+        function drawH() {
+            const ctx = sH.ctx;
+            const w = sH.cvs.width;
+            const h = sH.cvs.height;
+            if (w === 0 || h === 0) return;
+            ctx.clearRect(0, 0, w, h);
+            
+            const phys = calcH();
+            const baseY = Math.round(h * 0.72);
+            const boxW = 86;
+            const boxH = 64;
+
+            // 1. วาดพื้นดินแนวนอนพร้อมลายแรเงาแบบชีทฟิสิกส์
+            drawHatchGround(ctx, 20, w - 20, baseY, 14, 18);
+
+            // 2. คำนวณพิกัดกล่อง
+            const scale = 35;
+            const centerX = w / 2;
+            let boxCenterX = centerX + sH.x * scale;
+            
+            // ป้องกันกล่องหลุดจอ ให้วนรอบอย่างราบรื่น
+            const minX = 70;
+            const maxX = w - 70;
+            if (boxCenterX > maxX) {
+                sH.x = (minX - centerX) / scale;
+                boxCenterX = minX;
+            } else if (boxCenterX < minX) {
+                sH.x = (maxX - centerX) / scale;
+                boxCenterX = maxX;
+            }
+
+            const boxLeft = boxCenterX - boxW / 2;
+            const boxTop = baseY - boxH;
+            const boxCenterY = boxTop + boxH / 2;
+
+            // 3. วาดกล่องสี่เหลี่ยมแทนวัตถุ (เรียบง่าย สไตล์แผนภาพโจทย์ฟิสิกส์)
+            ctx.save();
+            ctx.fillStyle = '#eff6ff'; // สีฟ้าอ่อนสบายตา
+            ctx.strokeStyle = '#1e40af'; // ขอบน้ำเงินเข้มชัดเจน
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.rect(boxLeft, boxTop, boxW, boxH);
+            ctx.fill();
+            ctx.stroke();
+
+            // ตัวอักษรมวล m ภายในกล่อง
+            drawPhysicsText(ctx, `m = ${phys.m} kg`, boxCenterX, boxCenterY, '#1e3a8a', 'bold 16px Sarabun, sans-serif');
+            ctx.restore();
+
+            // 4. วาดเวกเตอร์แรง Free-body diagram
+            const vScale = 2.8;
+
+            // 4.1 แรงปฏิกิริยาตั้งฉาก N (ชี้ขึ้นในแนวดิ่ง ตั้งฉากกับพื้น)
+            const lenN = Math.min(105, Math.max(35, phys.N * vScale * 0.8));
+            drawVectorArrow(ctx, boxCenterX, boxCenterY, boxCenterX, boxCenterY - lenN, '#7c3aed', `N = ${phys.N.toFixed(1)} N (แรงปฏิกิริยาตั้งฉาก)`, 'above', 8);
+
+            // 4.2 แรงโน้มถ่วง mg (น้ำหนัก ชี้ลงในแนวดิ่ง)
+            const lenMg = lenN;
+            drawVectorArrow(ctx, boxCenterX, boxCenterY, boxCenterX, boxCenterY + lenMg, '#475569', `mg = ${phys.N.toFixed(1)} N (น้ำหนัก)`, 'below', 8);
+
+            // 4.3 แรงภายนอก F (ชี้ไปทางขวา)
+            if (Math.abs(phys.F_app) > 0.05) {
+                const lenF = Math.min(130, Math.max(35, Math.abs(phys.F_app) * vScale));
+                const dirF = Math.sign(phys.F_app);
+                const fStartX = boxCenterX + (dirF * boxW / 2);
+                drawVectorArrow(ctx, fStartX, boxCenterY, fStartX + dirF * lenF, boxCenterY, '#2563eb', `F = ${Math.abs(phys.F_app).toFixed(1)} N (แรงภายนอก)`, dirF > 0 ? 'right' : 'left', 10);
+            }
+
+            // 4.4 แรงเสียดทาน f (แนบที่ผิวสัมผัสพื้น ชี้ต้านแรง F)
+            if (Math.abs(phys.f) > 0.05) {
+                const lenFric = Math.min(125, Math.max(30, Math.abs(phys.f) * vScale));
+                const isMove = Math.abs(sH.v) > 0.05 || (Math.abs(phys.F_app) > phys.fs_max && Math.abs(phys.a) > 0);
+                const labelFric = isMove 
+                    ? `fk = ${phys.fk.toFixed(1)} N (แรงเสียดทานจลน์)` 
+                    : `fs = ${Math.abs(phys.f).toFixed(1)} N (แรงเสียดทานสถิต)`;
+                
+                const fricStartX = boxCenterX;
+                const fricDir = -Math.sign(phys.F_app || 1);
+                drawVectorArrow(ctx, fricStartX, baseY - 2, fricStartX + fricDir * lenFric, baseY - 2, '#dc2626', labelFric, fricDir > 0 ? 'right' : 'left', 12);
+            }
+
+            // 4.5 ลูกศรแสดงทิศทางการเคลื่อนที่ (แสดงเฉพาะเมื่อวัตถุเคลื่อนที่จริง)
+            if (Math.abs(sH.v) > 0.05) {
+                const dirV = Math.sign(sH.v);
+                const lenV = Math.min(80, Math.max(30, Math.abs(sH.v) * 12));
+                const vY = boxTop - 25;
+                drawVectorArrow(ctx, boxCenterX, vY, boxCenterX + dirV * lenV, vY, '#059669', `v = ${Math.abs(sH.v).toFixed(2)} m/s (ทิศการเคลื่อนที่)`, dirV > 0 ? 'right' : 'left', 10);
+            }
+
+            // 5. ป้ายสถานะจำลองในรูป
+            const isMovingState = Math.abs(sH.v) > 0.05 || (Math.abs(phys.F_app) > phys.fs_max && Math.abs(phys.a) > 0);
+            const stateText = isMovingState 
+                ? "สภาวะ: วัตถุกำลังเคลื่อนที่ (F > fs(max))" 
+                : "สภาวะ: วัตถุอยู่นิ่ง (F ≤ fs(max))";
+            const stateColor = isMovingState ? '#059669' : '#64748b';
+            drawPhysicsText(ctx, stateText, w - 24, 25, stateColor, 'bold 14px Sarabun, sans-serif', 'right', 'top');
+        }
+
+        function loopH(timestamp) {
+            if (!sH.isRunning) return;
+            let dt = (timestamp - sH.lastTime) / 1000;
+            if (dt > 0.05) dt = 0.05;
+            sH.lastTime = timestamp;
+
+            const steps = 4;
+            const sub_dt = dt / steps;
+            
+            for(let i=0; i<steps; i++) {
+                const phys = calcH();
+                let prevV = sH.v;
+                sH.v += phys.a * sub_dt;
+                
+                // ตรวจสอบการหยุดนิ่ง
+                if (Math.sign(prevV) !== Math.sign(sH.v) && Math.abs(phys.F_app) <= phys.fs_max) {
+                    sH.v = 0;
+                }
+                
+                sH.x += sH.v * sub_dt;
+                if (sH.x > 18) sH.x = -18; // วนกลับ
+                if (sH.x < -18) sH.x = 18;
+            }
+
+            const currentPhys = calcH();
+            updateUIH(currentPhys);
+            drawH();
+            requestAnimationFrame(loopH);
+        }
+
+        function readInputsH() {
+            let us = parseFloat(sH.inUs.value);
+            let uk = parseFloat(sH.inUk.value);
+            if (us < uk) { uk = us; sH.inUk.value = uk; } // uk ต้องไม่เกิน us
+            
+            sH.valM.textContent = sH.inM.value + ' kg';
+            sH.valF.textContent = sH.inF.value + ' N';
+            sH.valUs.textContent = sH.inUs.value;
+            sH.valUk.textContent = sH.inUk.value;
+            sH.valG.textContent = sH.inG.value + ' m/s²';
+            
+            if(!sH.isRunning) {
+                updateUIH(calcH());
+                drawH();
+            }
+        }
+
+        [sH.inM, sH.inF, sH.inUs, sH.inUk, sH.inG].forEach(el => el.addEventListener('input', readInputsH));
+
+        function togglePlayH() {
+            sH.isRunning = !sH.isRunning;
+            if (sH.isRunning) {
+                sH.btnPlay.style.display = 'none';
+                sH.btnPause.style.display = 'flex';
+                sH.btnPause.classList.remove('hidden');
+                sH.lastTime = performance.now();
+                requestAnimationFrame(loopH);
+            } else {
+                sH.btnPlay.style.display = 'flex';
+                sH.btnPause.style.display = 'none';
+            }
+        }
+
+        function resetH() {
+            sH.isRunning = false;
+            sH.btnPlay.style.display = 'flex';
+            sH.btnPause.style.display = 'none';
+            sH.x = 0; sH.v = 0;
+            readInputsH();
+        }
+
+        sH.btnPlay.addEventListener('click', togglePlayH);
+        sH.btnPause.addEventListener('click', togglePlayH);
+        sH.btnReset.addEventListener('click', resetH);
+
+
+        // ==========================================
+        // การจำลอง: พื้นเอียง
+        // ==========================================
+        const sI = {
+            isRunning: false,
+            lastTime: 0,
+            x: 0, v: 0,
+            
+            cvs: document.getElementById('canvas-i'),
+            ctx: document.getElementById('canvas-i').getContext('2d'),
+            cont: document.getElementById('container-i'),
+            
+            inM: document.getElementById('in-i-m'), valM: document.getElementById('val-i-m'),
+            inTh: document.getElementById('in-i-th'), valTh: document.getElementById('val-i-th'),
+            inUs: document.getElementById('in-i-us'), valUs: document.getElementById('val-i-us'),
+            inUk: document.getElementById('in-i-uk'), valUk: document.getElementById('val-i-uk'),
+            inG: document.getElementById('in-i-g'), valG: document.getElementById('val-i-g'),
+            
+            outN: document.getElementById('out-i-n'),
+            outMgsin: document.getElementById('out-i-mgsin'),
+            outF: document.getElementById('out-i-f'),
+            outFnet: document.getElementById('out-i-fnet'),
+            outA: document.getElementById('out-i-a'),
+            outV: document.getElementById('out-i-v'),
+            
+            statInd: document.getElementById('status-ind-i'),
+            statTxt: document.getElementById('status-text-i'),
+            
+            badge: document.getElementById('badge-i'),
+            resStatus: document.getElementById('res-status-i'),
+            resFnet: document.getElementById('res-fnet-i'),
+            resA: document.getElementById('res-a-i'),
+            desc: document.getElementById('desc-i'),
+            
+            btnCalc: document.getElementById('btn-calc-i'),
+            btnCalcText: document.getElementById('btn-calc-text-i'),
+            boxCalc: document.getElementById('box-calc-i'),
+            
+            chkManual: document.getElementById('chk-manual-i'),
+            chkSim: document.getElementById('chk-sim-i'),
+            
+            btnPlay: document.getElementById('btn-play-i'),
+            btnPause: document.getElementById('btn-pause-i'),
+            btnReset: document.getElementById('btn-reset-i')
+        };
+
+        function resizeI() {
+            if(activeTab !== 'i') return;
+            const rect = sI.cont.getBoundingClientRect();
+            if (rect.width > 0 && rect.height > 0) {
+                sI.cvs.width = rect.width;
+                sI.cvs.height = rect.height;
+                drawI();
+            }
+        }
+        window.addEventListener('resize', resizeI);
+
+        function calcI() {
+            const m = parseFloat(sI.inM.value);
+            const th = parseFloat(sI.inTh.value);
+            const us = parseFloat(sI.inUs.value);
+            const uk = parseFloat(sI.inUk.value);
+            const g = parseFloat(sI.inG.value);
+
+            const W = m * g;
+            const thRad = toRad(th);
+            
+            const N = W * Math.cos(thRad);
+            const F_gx = W * Math.sin(thRad); // แรงดึงลงตามแนวพื้นเอียง
+            
+            const fs_max = us * N;
+            const fk = uk * N;
+            
+            let f = 0, Fnet = 0, a = 0;
+
+            if (Math.abs(sI.v) < 1e-4) { // หยุดนิ่ง
+                if (F_gx <= fs_max) {
+                    f = -F_gx; // แรงเสียดทานสถิตต้านแรงดึงลงอย่างสมบูรณ์
+                    Fnet = 0;
+                    a = 0;
+                } else {
+                    f = -fk; // วัตถุเริ่มไถลลงตามพื้นเอียง
+                    Fnet = F_gx + f;
+                    a = Fnet / m;
+                }
+            } else { // เคลื่อนที่
+                const dir = Math.sign(sI.v);
+                f = -dir * fk;
+                Fnet = F_gx + f;
+                a = Fnet / m;
+            }
+
+            return { m, th, thRad, g, W, N, F_gx, fs_max, fk, f, Fnet, a, us, uk };
+        }
+
+        function updateUII(phys) {
+            sI.outN.textContent = phys.N.toFixed(1);
+            sI.outMgsin.textContent = phys.F_gx.toFixed(1);
+            sI.outF.textContent = Math.abs(phys.f).toFixed(1);
+            sI.outFnet.textContent = Math.abs(phys.Fnet).toFixed(1);
+            sI.outA.textContent = (Math.abs(phys.a) < 1e-4 ? 0 : phys.a).toFixed(2);
+            sI.outV.textContent = (Math.abs(sI.v) < 1e-4 ? 0 : sI.v).toFixed(2);
+
+            const isMoving = Math.abs(sI.v) > 0.05 || (phys.F_gx > phys.fs_max && Math.abs(phys.a) > 0);
+
+            if (isMoving) {
+                sI.statInd.className = "w-3 h-3 rounded-full bg-emerald-500 animate-pulse";
+                sI.statTxt.textContent = "สถานะ: วัตถุเคลื่อนที่ลงตามพื้นเอียง";
+                sI.badge.className = "text-xs font-semibold px-3 py-1 rounded-full bg-emerald-100 text-emerald-800";
+                sI.badge.textContent = "วัตถุเคลื่อนที่ลงตามพื้นเอียง";
+                sI.resStatus.textContent = "วัตถุเคลื่อนที่ลงตามพื้นเอียง";
+                sI.desc.textContent = "วัตถุเคลื่อนที่ลงตามพื้นเอียง เพราะองค์ประกอบของแรงโน้มถ่วงตามแนวพื้นเอียงมากกว่าแรงเสียดทานสถิตสูงสุด";
+            } else {
+                sI.statInd.className = "w-3 h-3 rounded-full bg-slate-400";
+                sI.statTxt.textContent = "สถานะ: วัตถุไม่เคลื่อนที่";
+                sI.badge.className = "text-xs font-semibold px-3 py-1 rounded-full bg-slate-100 text-slate-700";
+                sI.badge.textContent = "วัตถุไม่เคลื่อนที่";
+                sI.resStatus.textContent = "วัตถุไม่เคลื่อนที่";
+                sI.desc.textContent = "วัตถุไม่เคลื่อนที่ เพราะองค์ประกอบของแรงโน้มถ่วงตามแนวพื้นเอียงยังไม่มากกว่าแรงเสียดทานสถิตสูงสุด";
+            }
+
+            sI.resFnet.textContent = Math.abs(phys.Fnet).toFixed(2);
+            sI.resA.textContent = (Math.abs(phys.a) < 1e-4 ? 0 : phys.a).toFixed(2);
+
+            // ตรวจสอบผลการทดลอง
+            const theoreticalA = (phys.F_gx > phys.fs_max) ? ((phys.F_gx - phys.fk) / phys.m) : 0;
+            sI.chkManual.textContent = theoreticalA.toFixed(2) + " m/s²";
+            sI.chkSim.textContent = (Math.abs(phys.a) < 1e-4 ? 0 : phys.a).toFixed(2) + " m/s²";
+
+            // ปรับปรุงวิธีคำนวณทีละขั้น
+            renderCalcStepsI(phys);
+        }
+
+        function renderCalcStepsI(p) {
+            const isMove = p.F_gx > p.fs_max;
+            let html = '<div class="border-b border-slate-200 pb-2">' +
+                '<span class="text-indigo-600 font-bold">ขั้นที่ 1: คำนวณแรงปฏิกิริยาตั้งฉาก (N)</span><br>' +
+                'N = mg cosθ = ' + p.m + ' × ' + p.g + ' × cos(' + p.th + '°) = ' + p.W.toFixed(1) + ' × ' + Math.cos(p.thRad).toFixed(3) + ' = <span class="font-bold text-slate-900">' + p.N.toFixed(2) + ' N</span>' +
+                '</div>' +
+                '<div class="border-b border-slate-200 pb-2">' +
+                '<span class="text-indigo-600 font-bold">ขั้นที่ 2: คำนวณองค์ประกอบแรงโน้มถ่วงตามแนวพื้นเอียง (mg sinθ)</span><br>' +
+                'mg sinθ = ' + p.m + ' × ' + p.g + ' × sin(' + p.th + '°) = ' + p.W.toFixed(1) + ' × ' + Math.sin(p.thRad).toFixed(3) + ' = <span class="font-bold text-slate-900">' + p.F_gx.toFixed(2) + ' N</span>' +
+                '</div>' +
+                '<div class="border-b border-slate-200 pb-2">' +
+                '<span class="text-indigo-600 font-bold">ขั้นที่ 3: คำนวณแรงเสียดทานสถิตสูงสุด (fs(max))</span><br>' +
+                'fs(max) = μsN = ' + p.us + ' × ' + p.N.toFixed(2) + ' = <span class="font-bold text-slate-900">' + p.fs_max.toFixed(2) + ' N</span>' +
+                '</div>' +
+                '<div class="border-b border-slate-200 pb-2">' +
+                '<span class="text-indigo-600 font-bold">ขั้นที่ 4: เปรียบเทียบแรงดึงลงกับแรงเสียดทานสถิตสูงสุด</span><br>' +
+                'แรงดึงลง mg sinθ = ' + p.F_gx.toFixed(2) + ' N ' + (isMove ? '>' : '≤') + ' fs(max) = ' + p.fs_max.toFixed(2) + ' N<br>' +
+                '<span class="font-bold ' + (isMove ? 'text-emerald-600' : 'text-amber-600') + '">ดังนั้น ' + (isMove ? 'วัตถุเคลื่อนที่ลงตามพื้นเอียง' : 'วัตถุไม่เคลื่อนที่') + '</span>' +
+                '</div>';
+
+            if (isMove) {
+                html += '<div class="border-b border-slate-200 pb-2">' +
+                    '<span class="text-indigo-600 font-bold">ขั้นที่ 5: คำนวณแรงเสียดทานจลน์ (fk)</span><br>' +
+                    'fk = μkN = ' + p.uk + ' × ' + p.N.toFixed(2) + ' = <span class="font-bold text-slate-900">' + p.fk.toFixed(2) + ' N</span>' +
+                    '</div>' +
+                    '<div class="border-b border-slate-200 pb-2">' +
+                    '<span class="text-indigo-600 font-bold">ขั้นที่ 6: คำนวณแรงลัพธ์ (Fลัพธ์)</span><br>' +
+                    'Fลัพธ์ = mg sinθ - fk = ' + p.F_gx.toFixed(2) + ' - ' + p.fk.toFixed(2) + ' = <span class="font-bold text-slate-900">' + Math.abs(p.Fnet).toFixed(2) + ' N</span>' +
+                    '</div>' +
+                    '<div>' +
+                    '<span class="text-indigo-600 font-bold">ขั้นที่ 7: คำนวณความเร่ง (a)</span><br>' +
+                    'a = Fลัพธ์ / m = ' + Math.abs(p.Fnet).toFixed(2) + ' / ' + p.m + ' = <span class="font-bold text-purple-700">' + p.a.toFixed(2) + ' m/s²</span>' +
+                    '</div>';
+            } else {
+                html += '<div>' +
+                    '<span class="text-indigo-600 font-bold">ผลสรุป:</span><br>' +
+                    'แรงลัพธ์ Fลัพธ์ = 0.00 N<br>' +
+                    'ความเร่ง a = 0.00 m/s²' +
+                    '</div>';
+            }
+            sI.boxCalc.innerHTML = html;
+        }
+
+        sI.btnCalc.addEventListener('click', () => {
+            sI.boxCalc.classList.toggle('hidden');
+            sI.btnCalcText.textContent = sI.boxCalc.classList.contains('hidden') ? 'ดูวิธีคำนวณ' : 'ซ่อนวิธีคำนวณ';
+        });
+
+        function drawI() {
+            const ctx = sI.ctx;
+            const w = sI.cvs.width;
+            const h = sI.cvs.height;
+            if (w === 0 || h === 0) return;
+            ctx.clearRect(0, 0, w, h);
+            
+            const phys = calcI();
+            const thRad = phys.thRad;
+            const sinTh = Math.sin(thRad);
+            const cosTh = Math.cos(thRad);
+
+            const baseY = Math.round(h * 0.82);
+
+            // 1. ขนาดของทางลาดสามเหลี่ยมมุมฉาก ให้พอดีกับ Canvas ทุกมุม
+            const maxW = w * 0.64;
+            const maxH = h * 0.62;
+            const L = Math.min(520, Math.max(220, Math.min(maxW / cosTh, maxH / sinTh)));
+            const wedgeW = L * cosTh;
+            const wedgeH = L * sinTh;
+
+            // จัดตำแหน่งสามเหลี่ยมให้อยู่ตรงกลางหน้าจอ
+            const xRight = Math.round(w / 2 + wedgeW / 2);
+            const xLeft = xRight - wedgeW;
+            const yTop = baseY - wedgeH;
+
+            // 2. วาดพื้นดินแนวนอนพร้อมลายแรเงาใต้ฐานสามเหลี่ยม
+            drawHatchGround(ctx, 20, w - 20, baseY, 14, 18);
+
+            // 3. วาดพื้นเอียงรูปสามเหลี่ยมมุมฉาก (Ramp Wedge) สไตล์ชีทฟิสิกส์
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(xLeft, baseY);
+            ctx.lineTo(xLeft, yTop);
+            ctx.lineTo(xRight, baseY);
+            ctx.closePath();
+            ctx.fillStyle = '#f8fafc';
+            ctx.fill();
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            // 3.1 สัญลักษณ์มุมฉากที่มุมล่างซ้าย (Right Angle Marker)
+            const sqSize = 14;
+            ctx.beginPath();
+            ctx.moveTo(xLeft, baseY - sqSize);
+            ctx.lineTo(xLeft + sqSize, baseY - sqSize);
+            ctx.lineTo(xLeft + sqSize, baseY);
+            ctx.strokeStyle = '#64748b';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            // 3.2 ส่วนโค้งแสดงมุม θ ที่ฐานขวา
+            const arcR = Math.min(55, wedgeW * 0.28);
+            ctx.beginPath();
+            ctx.arc(xRight, baseY, arcR, Math.PI - thRad, Math.PI, false);
+            ctx.strokeStyle = '#0284c7';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // ป้ายกำกับมุม θ ที่ฐาน
+            const labelAngle = Math.PI - thRad / 2;
+            const arcLabelX = xRight + (arcR + 24) * Math.cos(labelAngle);
+            const arcLabelY = baseY - (arcR + 24) * Math.sin(thRad / 2) + 4;
+            drawPhysicsText(ctx, `θ = ${phys.th}°`, arcLabelX, arcLabelY, '#0284c7', 'bold 15px Sarabun, sans-serif');
+            ctx.restore();
+
+            // 4. หน่วยเวกเตอร์ (Unit Vectors)
+            const uPar = { x: cosTh, y: sinTh };       // ขนานพื้นเอียงชี้ลง
+            const uOut = { x: sinTh, y: -cosTh };      // ตั้งฉากชี้ออกจากผิวพื้นเอียง
+            const uIn = { x: -sinTh, y: cosTh };       // ตั้งฉากชี้กดลงในเนื้อพื้นเอียง
+
+            // 5. ตำแหน่งของกล่องบนพื้นเอียง
+            const boxW = 80;
+            const boxH = 55;
+            const minS = 40;
+            const maxS = L - 50;
+
+            const baseS = minS + (maxS - minS) * 0.25;
+            let currS = baseS + sI.x * 25;
+
+            // ถ้ารูดลงไปใกล้สุดทางลาด ให้วนกลับมาเริ่มใหม่
+            if (currS > maxS) {
+                sI.x = 0;
+                currS = baseS;
+            } else if (currS < minS) {
+                currS = minS;
+            }
+
+            // จุดสัมผัสกึ่งกลางใต้กล่องบนผิวทางลาด
+            const pContact = {
+                x: xLeft + currS * uPar.x,
+                y: yTop + currS * uPar.y
+            };
+
+            // จุดศูนย์กลางมวลของกล่อง
+            const pBox = {
+                x: pContact.x + (boxH / 2) * uOut.x,
+                y: pContact.y + (boxH / 2) * uOut.y
+            };
+
+            // 6. วาดกล่องวัตถุบนพื้นเอียง (แนบสนิทกับผิวทางลาด)
+            ctx.save();
+            ctx.translate(pBox.x, pBox.y);
+            ctx.rotate(thRad);
+            ctx.fillStyle = '#eff6ff';
+            ctx.strokeStyle = '#1e40af';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.rect(-boxW / 2, -boxH / 2, boxW, boxH);
+            ctx.fill();
+            ctx.stroke();
+
+            // แสดงมวลในกล่อง
+            drawPhysicsText(ctx, `m = ${phys.m} kg`, 0, 0, '#1e3a8a', 'bold 15px Sarabun, sans-serif');
+            ctx.restore();
+
+            // 7. เวกเตอร์แรง Free-body diagram บนพื้นเอียง
+            const vScale = 2.8;
+
+            // 7.1 น้ำหนัก mg (ชี้ลงในแนวดิ่งจริง!)
+            const lenMg = Math.min(115, Math.max(35, phys.W * vScale * 0.7));
+            const tipMg = {
+                x: pBox.x,
+                y: pBox.y + lenMg
+            };
+            drawVectorArrow(ctx, pBox.x, pBox.y, tipMg.x, tipMg.y, '#475569', `mg = ${phys.W.toFixed(1)} N (น้ำหนัก)`, 'below', 8);
+
+            // 7.2 องค์ประกอบ mg cosθ (ตั้งฉากกับผิวเอียง ชี้กดลงในเนื้อพื้นเอียง)
+            const lenMgCos = lenMg * cosTh;
+            const tipMgCos = {
+                x: pBox.x + lenMgCos * uIn.x,
+                y: pBox.y + lenMgCos * uIn.y
+            };
+            drawVectorArrow(ctx, pBox.x, pBox.y, tipMgCos.x, tipMgCos.y, '#0d9488', `mg cosθ = ${phys.N.toFixed(1)} N`, 'left', 10);
+
+            // 7.3 องค์ประกอบ mg sinθ (ขนานกับพื้นเอียง ชี้ลงสู่ด้านล่าง)
+            const lenMgSin = lenMg * sinTh;
+            const tipMgSin = {
+                x: pBox.x + lenMgSin * uPar.x,
+                y: pBox.y + lenMgSin * uPar.y
+            };
+            drawVectorArrow(ctx, pBox.x, pBox.y, tipMgSin.x, tipMgSin.y, '#0284c7', `mg sinθ = ${phys.F_gx.toFixed(1)} N`, 'right', 10);
+
+            // 7.4 เส้นประแสดงการแตกแรง (Vector Resolution Lines เหมือนในหนังสือเรียน)
+            ctx.save();
+            ctx.setLineDash([4, 4]);
+            ctx.strokeStyle = '#94a3b8';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(tipMgCos.x, tipMgCos.y);
+            ctx.lineTo(tipMg.x, tipMg.y);
+            ctx.moveTo(tipMgSin.x, tipMgSin.y);
+            ctx.lineTo(tipMg.x, tipMg.y);
+            ctx.stroke();
+            ctx.restore();
+
+            // 7.5 แสดงมุม θ ระหว่างแนวดิ่ง mg กับแนวตั้งฉาก mg cosθ (ตรงตามหลักเรขาคณิต)
+            const angleArcR = 28;
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(pBox.x, pBox.y, angleArcR, Math.PI / 2, Math.PI / 2 + thRad, false);
+            ctx.strokeStyle = '#0284c7';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+            const midAngle = Math.PI / 2 + thRad / 2;
+            drawPhysicsText(ctx, 'θ', pBox.x + (angleArcR + 12) * Math.cos(midAngle), pBox.y + (angleArcR + 12) * Math.sin(midAngle), '#0284c7', 'bold 13px Sarabun, sans-serif');
+            ctx.restore();
+
+            // 7.6 แรงปฏิกิริยาตั้งฉาก N (ตั้งฉากกับพื้นเอียงจริง ชี้ออกจากผิวทางลาด)
+            const lenN = lenMgCos;
+            const tipN = {
+                x: pBox.x + lenN * uOut.x,
+                y: pBox.y + lenN * uOut.y
+            };
+            drawVectorArrow(ctx, pBox.x, pBox.y, tipN.x, tipN.y, '#7c3aed', `N = ${phys.N.toFixed(1)} N (แรงปฏิกิริยาตั้งฉาก)`, 'above', 8);
+
+            // 7.7 แรงเสียดทาน f (แนบตามแนวผิวทางลาด ชี้ขึ้นต้านการไถล)
+            if (Math.abs(phys.f) > 0.05) {
+                const lenFric = Math.min(115, Math.max(30, (Math.abs(phys.f) / phys.W) * lenMg));
+                const isMove = Math.abs(sI.v) > 0.05 || (phys.F_gx > phys.fs_max && Math.abs(phys.a) > 0);
+                const labelFric = isMove 
+                    ? `fk = ${phys.fk.toFixed(1)} N (แรงเสียดทานจลน์)` 
+                    : `fs = ${Math.abs(phys.f).toFixed(1)} N (แรงเสียดทานสถิต)`;
+                
+                const tipFric = {
+                    x: pContact.x - lenFric * uPar.x,
+                    y: pContact.y - lenFric * uPar.y
+                };
+                drawVectorArrow(ctx, pContact.x, pContact.y, tipFric.x, tipFric.y, '#dc2626', labelFric, 'left', 12);
+            }
+
+            // 7.8 ลูกศรแสดงทิศทางการเคลื่อนที่ (เฉพาะเมื่อเคลื่อนที่)
+            if (Math.abs(sI.v) > 0.05) {
+                const lenV = Math.min(75, Math.max(30, Math.abs(sI.v) * 10));
+                const vStart = {
+                    x: pBox.x + (boxH / 2 + 18) * uOut.x,
+                    y: pBox.y + (boxH / 2 + 18) * uOut.y
+                };
+                const vTip = {
+                    x: vStart.x + lenV * uPar.x,
+                    y: vStart.y + lenV * uPar.y
+                };
+                drawVectorArrow(ctx, vStart.x, vStart.y, vTip.x, vTip.y, '#059669', `v = ${Math.abs(sI.v).toFixed(2)} m/s (ทิศการเคลื่อนที่)`, 'right', 10);
+            }
+
+            // 8. ป้ายบอกสภาวะในรูป
+            const isMovingState = Math.abs(sI.v) > 0.05 || (phys.F_gx > phys.fs_max && Math.abs(phys.a) > 0);
+            const stateText = isMovingState 
+                ? "สภาวะ: วัตถุกำลังไถลลงตามพื้นเอียง (mg sinθ > fs(max))" 
+                : "สภาวะ: วัตถุอยู่นิ่งบนพื้นเอียง (mg sinθ ≤ fs(max))";
+            const stateColor = isMovingState ? '#059669' : '#64748b';
+            drawPhysicsText(ctx, stateText, w - 24, 25, stateColor, 'bold 14px Sarabun, sans-serif', 'right', 'top');
+        }
+
+        function loopI(timestamp) {
+            if (!sI.isRunning) return;
+            let dt = (timestamp - sI.lastTime) / 1000;
+            if (dt > 0.05) dt = 0.05;
+            sI.lastTime = timestamp;
+
+            const steps = 4;
+            const sub_dt = dt / steps;
+            
+            for(let i=0; i<steps; i++) {
+                const phys = calcI();
+                let prevV = sI.v;
+                sI.v += phys.a * sub_dt;
+                
+                // ตรวจสอบการหยุดนิ่ง
+                if (Math.sign(prevV) !== Math.sign(sI.v) && phys.F_gx <= phys.fs_max) {
+                    sI.v = 0;
+                }
+                
+                sI.x += sI.v * sub_dt;
+                // ถ้ากล่องไถลเลยช่วงทางลาด ให้วนกลับมาด้านบนอย่างราบรื่น
+                if (sI.x > 18) sI.x = 0; 
+                if (sI.x < -2) sI.x = 0;
+            }
+
+            updateUII(calcI());
+            drawI();
+            requestAnimationFrame(loopI);
+        }
+
+        function readInputsI() {
+            let us = parseFloat(sI.inUs.value);
+            let uk = parseFloat(sI.inUk.value);
+            if (us < uk) { uk = us; sI.inUk.value = uk; } 
+            
+            sI.valM.textContent = sI.inM.value + ' kg';
+            sI.valTh.textContent = sI.inTh.value + '°';
+            sI.valUs.textContent = sI.inUs.value;
+            sI.valUk.textContent = sI.inUk.value;
+            sI.valG.textContent = sI.inG.value + ' m/s²';
+            
+            if(!sI.isRunning) {
+                updateUII(calcI());
+                drawI();
+            }
+        }
+
+        [sI.inM, sI.inTh, sI.inUs, sI.inUk, sI.inG].forEach(el => el.addEventListener('input', readInputsI));
+
+        function togglePlayI() {
+            sI.isRunning = !sI.isRunning;
+            if (sI.isRunning) {
+                sI.btnPlay.style.display = 'none';
+                sI.btnPause.style.display = 'flex';
+                sI.btnPause.classList.remove('hidden');
+                sI.lastTime = performance.now();
+                requestAnimationFrame(loopI);
+            } else {
+                sI.btnPlay.style.display = 'flex';
+                sI.btnPause.style.display = 'none';
+            }
+        }
+
+        function resetI() {
+            sI.isRunning = false;
+            sI.btnPlay.style.display = 'flex';
+            sI.btnPause.style.display = 'none';
+            sI.x = 0; sI.v = 0;
+            readInputsI();
+        }
+
+        sI.btnPlay.addEventListener('click', togglePlayI);
+        sI.btnPause.addEventListener('click', togglePlayI);
+        sI.btnReset.addEventListener('click', resetI);
+
+
+        // ==========================================
+        // ระบบตรวจแบบทดสอบ & ใบงานการทดลอง
+        // ==========================================
+        document.getElementById('btn-check-quiz').addEventListener('click', () => {
+            // ข้อ 1
+            const q1Val = document.querySelector('input[name="q1"]:checked')?.value;
+            const resQ1 = document.getElementById('res-q1');
+            resQ1.classList.remove('hidden');
+            if(q1Val === 'stop') {
+                resQ1.innerHTML = "<span class='text-emerald-700 font-bold'>✓ ถูกต้อง</span> วัตถุไม่เคลื่อนที่ เพราะแรงภายนอก (10 N) น้อยกว่าแรงเสียดทานสถิตสูงสุด fs(max) = μsN = 0.4 × (5 × 10) = 20 N";
+                resQ1.className = "mt-3 p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-slate-700";
+            } else if (q1Val) {
+                resQ1.innerHTML = "<span class='text-red-700 font-bold'>✗ ยังไม่ถูก</span> ลองคำนวณแรงเสียดทานสถิตสูงสุด fs(max) = μsN = 0.4 × (5 × 10) = 20 N ซึ่งแรงภายนอก 10 N ยังไม่มากกว่าแรงเสียดทานสถิตสูงสุด วัตถุจึงยังไม่เคลื่อนที่";
+                resQ1.className = "mt-3 p-3 bg-red-50 rounded-xl border border-red-200 text-slate-700";
+            } else {
+                resQ1.textContent = "กรุณาเลือกคำตอบข้อ 1";
+                resQ1.className = "mt-3 p-3 bg-amber-50 rounded-xl border border-amber-200 text-amber-800";
+            }
+
+            // ข้อ 2
+            const q2Val = document.querySelector('input[name="q2"]:checked')?.value;
+            const resQ2 = document.getElementById('res-q2');
+            resQ2.classList.remove('hidden');
+            if(q2Val === 'move') {
+                resQ2.innerHTML = "<span class='text-emerald-700 font-bold'>✓ ถูกต้อง</span> วัตถุเคลื่อนที่ลงตามพื้นเอียง เพราะองค์ประกอบแรงโน้มถ่วงตามแนวพื้นเอียง mg sinθ = 5 × 10 × sin(30°) = 25 N มากกว่าแรงเสียดทานสถิตสูงสุด fs(max) = μs(mg cosθ) = 0.4 × (5 × 10 × cos 30°) ≈ 17.32 N";
+                resQ2.className = "mt-3 p-3 bg-emerald-50 rounded-xl border border-emerald-200 text-slate-700";
+            } else if (q2Val) {
+                resQ2.innerHTML = "<span class='text-red-700 font-bold'>✗ ยังไม่ถูก</span> เพราะแรงดึงลงตามแนวพื้นเอียง mg sinθ = 25 N มากกว่าแรงเสียดทานสถิตสูงสุด fs(max) ≈ 17.32 N วัตถุจึงสามารถเคลื่อนที่ลงตามพื้นเอียงได้";
+                resQ2.className = "mt-3 p-3 bg-red-50 rounded-xl border border-red-200 text-slate-700";
+            } else {
+                resQ2.textContent = "กรุณาเลือกคำตอบข้อ 2";
+                resQ2.className = "mt-3 p-3 bg-amber-50 rounded-xl border border-amber-200 text-amber-800";
+            }
+        });
+        
+        // ปุ่ม: ใช้ค่าจากใบงาน (การทดลองที่ 1 — พื้นราบ)
+        document.getElementById('btn-load-exp1').addEventListener('click', () => {
+            sH.inM.value = 2;
+            sH.inF.value = 10;
+            sH.inUs.value = 0.4;
+            sH.inUk.value = 0.2;
+            sH.inG.value = 10;
+            readInputsH();
+            switchTab('h');
+            resetH();
+            const cont = document.getElementById('container-h');
+            cont.classList.add('ring-4', 'ring-purple-400');
+            setTimeout(() => cont.classList.remove('ring-4', 'ring-purple-400'), 1000);
+        });
+
+        // ปุ่ม: ใช้ค่าจากใบงาน (การทดลองที่ 2 — พื้นเอียง)
+        document.getElementById('btn-load-exp2').addEventListener('click', () => {
+            sI.inM.value = 2;
+            sI.inTh.value = 30;
+            sI.inUs.value = 0.4;
+            sI.inUk.value = 0.2;
+            sI.inG.value = 10;
+            readInputsI();
+            switchTab('i');
+            resetI();
+            const cont = document.getElementById('container-i');
+            cont.classList.add('ring-4', 'ring-purple-400');
+            setTimeout(() => cont.classList.remove('ring-4', 'ring-purple-400'), 1000);
+        });
+
+        // เริ่มต้นการทำงานของแอปพลิเคชัน
+        function initApp() {
+            readInputsH();
+            readInputsI();
+            resizeH();
+            resizeI();
+        }
+
+        if (window.ResizeObserver) {
+            const ro = new ResizeObserver(() => {
+                if (activeTab === 'h') resizeH();
+                if (activeTab === 'i') resizeI();
+            });
+            if (sH.cont) ro.observe(sH.cont);
+            if (sI.cont) ro.observe(sI.cont);
+        }
+
+        initApp();
+        window.addEventListener('DOMContentLoaded', initApp);
+        window.addEventListener('load', () => setTimeout(initApp, 50));
+
+    </script>
+</body>
+</html>
