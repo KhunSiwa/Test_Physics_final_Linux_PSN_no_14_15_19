@@ -839,7 +839,7 @@
 
             // 2. คำนวณพิกัดกล่อง (จัดวางแบบจำลองไว้ตรงกลางหน้าจอ เลื่อนตามทิศทางความเร็ว)
             const boxStartX = Math.round(w / 2);
-            const boxEndX = (w - 40) - boxW / 2;
+            const boxEndX = (w - 140) - boxW / 2;
             const maxDist = Math.max(10, boxEndX - boxStartX);
             const currentDist = Math.sign(sH.dist || 0) * Math.min(maxDist, Math.abs(sH.dist || 0));
             const boxCenterX = boxStartX + currentDist;
@@ -899,13 +899,13 @@
             // 4.5 ลูกศรแสดงทิศทางการเคลื่อนที่และความเร็ว (เฉพาะเมื่อวัตถุกำลังเคลื่อนที่จริง)
             if (Math.abs(sH.v) > 0.05 && !sH.isFinished) {
                 const dirV = Math.sign(sH.v);
-                const lenV = Math.min(70, Math.max(35, Math.abs(sH.v) * 15));
-                // วางด้านหน้ากล่องตามทิศการเคลื่อนที่ ลอยในพื้นที่ว่างเหนือแนวแรง F
-                const vStartX = dirV > 0 ? (boxCenterX + boxW / 2 + 15) : (boxCenterX - boxW / 2 - 15);
+                const lenV = 55;
+                // วางด้านหน้ากล่องตามทิศการเคลื่อนที่ ลอย 45px เหนือแนวแกนกล่อง (13px เหนือขอบบนกล่อง) เว้นระยะไม่ทับ N, F หรือตัวกล่อง
+                const vStartX = dirV > 0 ? (boxCenterX + boxW / 2 + 18) : (boxCenterX - boxW / 2 - 18);
                 const vTipX = vStartX + dirV * lenV;
-                const vY = boxTop - 18;
+                const vY = boxCenterY - 45;
                 drawVectorArrow(ctx, vStartX, vY, vTipX, vY, '#059669', '', 'none');
-                drawPhysicsText(ctx, `v = ${Math.abs(sH.v).toFixed(2)} m/s`, (vStartX + vTipX) / 2, vY - 11, '#059669', 'bold 13px Sarabun, sans-serif', 'center', 'bottom');
+                drawPhysicsText(ctx, `v = ${Math.abs(sH.v).toFixed(2)} m/s`, (vStartX + vTipX) / 2, vY - 14, '#059669', 'bold 13px Sarabun, sans-serif', 'center', 'bottom');
             }
 
             // 5. สัญลักษณ์แรงลัพธ์ ΣF และความเร่ง a บนภาพ
@@ -927,7 +927,7 @@
             const w = sH.cvs.width || 600;
             const boxW = 86;
             const boxStartX = Math.round(w / 2);
-            const boxEndX = (w - 40) - boxW / 2;
+            const boxEndX = (w - 140) - boxW / 2;
             const maxDist = Math.max(10, boxEndX - boxStartX);
 
             for (let i = 0; i < steps; i++) {
@@ -1240,9 +1240,9 @@
             const baseY = Math.round(h * 0.82);
 
             // 1. ขนาดของทางลาดสามเหลี่ยมมุมฉาก ให้พอดีกับ Canvas ทุกมุม
-            const maxW = w * 0.64;
-            const maxH = h * 0.50;
-            const L = Math.min(520, Math.max(220, Math.min(maxW / cosTh, maxH / sinTh)));
+            const maxW = w * 0.62;
+            const maxH = h * 0.46;
+            const L = Math.min(460, Math.max(200, Math.min(maxW / cosTh, maxH / sinTh)));
             const wedgeW = L * cosTh;
             const wedgeH = L * sinTh;
 
@@ -1278,7 +1278,7 @@
             ctx.stroke();
 
             // 3.2 ส่วนโค้งแสดงมุม θ ที่ฐานขวา (วาดเข้าด้านในสามเหลี่ยมระหว่างพื้นราบกับทางลาด)
-            const arcR = Math.min(46, Math.max(30, wedgeW * 0.18));
+            const arcR = Math.min(38, Math.max(26, wedgeW * 0.18));
             ctx.beginPath();
             ctx.arc(xRight, baseY, arcR, Math.PI, Math.PI + thRad, false);
             ctx.strokeStyle = '#0284c7';
@@ -1286,10 +1286,10 @@
             ctx.stroke();
 
             // ป้ายกำกับมุม θ ที่ฐาน วางในช่องว่างระหว่างพื้นกับทางลาดให้อ่านง่าย
-            const labelDist = arcR + (phys.th < 25 ? 28 : 22);
+            const labelDist = arcR + (phys.th < 25 ? 26 : 20);
             const arcLabelX = xRight - labelDist * Math.cos(thRad * 0.45);
             const arcLabelY = baseY - labelDist * Math.sin(thRad * 0.45) - 2;
-            drawPhysicsText(ctx, `θ = ${phys.th}°`, arcLabelX, arcLabelY, '#0284c7', 'bold 13px Sarabun, sans-serif');
+            drawPhysicsText(ctx, `θ = ${phys.th}°`, arcLabelX, arcLabelY, '#0284c7', 'bold 12px Sarabun, sans-serif');
             ctx.restore();
 
             // 4. หน่วยเวกเตอร์ (Unit Vectors)
@@ -1301,7 +1301,7 @@
             const boxW = 80;
             const boxH = 55;
             const minS = boxW / 2 + 25;
-            const maxS = L - boxW / 2;
+            const maxS = L - boxW / 2 - 55; // หยุดก่อนถึงมุมขวาล่าง 55px เพื่อไม่ให้ mg และ mg cos ทับมุม θ
             const maxTravel = Math.max(10, maxS - minS);
             const currentDist = Math.min(maxTravel, Math.max(0, sI.dist || 0));
             const currS = minS + currentDist;
@@ -1416,11 +1416,11 @@
 
             // 7.8 ลูกศรแสดงทิศทางการเคลื่อนที่และความเร็ว (เฉพาะเมื่อวัตถุกำลังเคลื่อนที่จริง)
             if (Math.abs(sI.v) > 0.05 && !sI.isFinished) {
-                const lenV = Math.min(65, Math.max(35, Math.abs(sI.v) * 20));
-                // วางลอยขนานกับพื้นเอียงเหนือมุมขวาบนของกล่อง ในพื้นที่ว่าง
+                const lenV = 55;
+                // วางลอยขนานกับพื้นเอียง นำหน้าแรง N 40px และยกสูง 62px จากแนวกลางกล่อง (35px เหนือผิวบนกล่อง) ในพื้นที่ว่างสมบูรณ์
                 const vStart = {
-                    x: pBox.x + 32 * uPar.x + (boxH / 2 + 25) * uOut.x,
-                    y: pBox.y + 32 * uPar.y + (boxH / 2 + 25) * uOut.y
+                    x: pBox.x + 40 * uPar.x + 62 * uOut.x,
+                    y: pBox.y + 40 * uPar.y + 62 * uOut.y
                 };
                 const vTip = {
                     x: vStart.x + lenV * uPar.x,
@@ -1428,10 +1428,10 @@
                 };
                 drawVectorArrow(ctx, vStart.x, vStart.y, vTip.x, vTip.y, '#059669', '', 'none');
 
-                // ป้าย v วางเหนือลูกศรในทิศ uOut (ออกสู่ที่ว่างด้านบน) มีระยะห่างกำลังดี
+                // ป้าย v วางเหนือลูกศรในทิศ uOut มีระยะห่าง 16px อ่านง่ายและไม่ติดกับลูกศร
                 const vMid = {
-                    x: (vStart.x + vTip.x) / 2 + 14 * uOut.x,
-                    y: (vStart.y + vTip.y) / 2 + 14 * uOut.y
+                    x: (vStart.x + vTip.x) / 2 + 16 * uOut.x,
+                    y: (vStart.y + vTip.y) / 2 + 16 * uOut.y
                 };
                 drawPhysicsText(ctx, `v = ${Math.abs(sI.v).toFixed(2)} m/s`, vMid.x, vMid.y, '#059669', 'bold 13px Sarabun, sans-serif', 'center', 'bottom');
             }
@@ -1458,12 +1458,12 @@
             const phys = calcI();
             const sinTh = Math.sin(phys.thRad);
             const cosTh = Math.cos(phys.thRad);
-            const maxW = w * 0.64;
-            const maxH = h * 0.62;
-            const L = Math.min(520, Math.max(220, Math.min(maxW / cosTh, maxH / sinTh)));
+            const maxW = w * 0.62;
+            const maxH = h * 0.46;
+            const L = Math.min(460, Math.max(200, Math.min(maxW / cosTh, maxH / sinTh)));
             const boxW = 80;
-            const minS = boxW / 2 + 10;
-            const maxS = L - boxW / 2;
+            const minS = boxW / 2 + 25;
+            const maxS = L - boxW / 2 - 55;
             const maxTravel = Math.max(10, maxS - minS);
 
             for (let i = 0; i < steps; i++) {
