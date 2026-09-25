@@ -837,11 +837,11 @@
             // 1. วาดพื้นดินแนวนอนพร้อมลายแรเงาแบบชีทฟิสิกส์
             drawHatchGround(ctx, 20, w - 20, baseY, 14, 18);
 
-            // 2. คำนวณพิกัดกล่อง (เริ่มต้นจากซ้าย เลื่อนไปจนถึงปลายพื้นขวา)
-            const boxStartX = 80 + boxW / 2;
+            // 2. คำนวณพิกัดกล่อง (จัดวางแบบจำลองไว้ตรงกลางหน้าจอ เลื่อนตามทิศทางความเร็ว)
+            const boxStartX = Math.round(w / 2);
             const boxEndX = (w - 40) - boxW / 2;
             const maxDist = Math.max(10, boxEndX - boxStartX);
-            const currentDist = Math.min(maxDist, Math.max(0, sH.dist || 0));
+            const currentDist = Math.sign(sH.dist || 0) * Math.min(maxDist, Math.abs(sH.dist || 0));
             const boxCenterX = boxStartX + currentDist;
 
             const boxLeft = boxCenterX - boxW / 2;
@@ -928,7 +928,7 @@
             const sub_dt = dt / steps;
             const w = sH.cvs.width || 600;
             const boxW = 86;
-            const boxStartX = 80 + boxW / 2;
+            const boxStartX = Math.round(w / 2);
             const boxEndX = (w - 40) - boxW / 2;
             const maxDist = Math.max(10, boxEndX - boxStartX);
 
@@ -946,8 +946,8 @@
                 sH.dist += sH.v * sub_dt * scale;
 
                 // เมื่อถึงจุดสิ้นสุดของพื้นราบ ให้หยุดทันที
-                if (sH.dist >= maxDist) {
-                    sH.dist = maxDist;
+                if (Math.abs(sH.dist) >= maxDist) {
+                    sH.dist = Math.sign(sH.dist) * maxDist;
                     sH.v = 0;
                     sH.isRunning = false;
                     sH.isFinished = true;
@@ -1279,19 +1279,19 @@
             ctx.lineWidth = 1.5;
             ctx.stroke();
 
-            // 3.2 ส่วนโค้งแสดงมุม θ ที่ฐานขวา
-            const arcR = Math.min(55, wedgeW * 0.28);
+            // 3.2 ส่วนโค้งแสดงมุม θ ที่ฐานขวา (วาดเข้าด้านในสามเหลี่ยมระหว่างพื้นราบกับทางลาด)
+            const arcR = Math.min(46, Math.max(30, wedgeW * 0.18));
             ctx.beginPath();
-            ctx.arc(xRight, baseY, arcR, Math.PI - thRad, Math.PI, false);
+            ctx.arc(xRight, baseY, arcR, Math.PI, Math.PI + thRad, false);
             ctx.strokeStyle = '#0284c7';
-            ctx.lineWidth = 2;
+            ctx.lineWidth = 2.2;
             ctx.stroke();
 
-            // ป้ายกำกับมุม θ ที่ฐาน
-            const labelAngle = Math.PI - thRad / 2;
-            const arcLabelX = xRight + (arcR + 24) * Math.cos(labelAngle);
-            const arcLabelY = baseY - (arcR + 24) * Math.sin(thRad / 2) + 4;
-            drawPhysicsText(ctx, `θ = ${phys.th}°`, arcLabelX, arcLabelY, '#0284c7', 'bold 15px Sarabun, sans-serif');
+            // ป้ายกำกับมุม θ ที่ฐาน วางในช่องว่างระหว่างพื้นกับทางลาดให้อ่านง่าย
+            const labelDist = arcR + (phys.th < 25 ? 28 : 22);
+            const arcLabelX = xRight - labelDist * Math.cos(thRad * 0.45);
+            const arcLabelY = baseY - labelDist * Math.sin(thRad * 0.45) - 2;
+            drawPhysicsText(ctx, `θ = ${phys.th}°`, arcLabelX, arcLabelY, '#0284c7', 'bold 13px Sarabun, sans-serif');
             ctx.restore();
 
             // 4. หน่วยเวกเตอร์ (Unit Vectors)
@@ -1411,18 +1411,27 @@
                 drawVectorArrow(ctx, pContact.x, pContact.y, tipFric.x, tipFric.y, '#dc2626', labelFric, 'left', 12);
             }
 
-            // 7.8 ลูกศรแสดงทิศทางการเคลื่อนที่ (เฉพาะเมื่อวัตถุกำลังเคลื่อนที่จริง)
+            // 7.8 ลูกศรแสดงทิศทางการเคลื่อนที่และความเร็ว (เฉพาะเมื่อวัตถุกำลังเคลื่อนที่จริง)
             if (Math.abs(sI.v) > 0.05 && !sI.isFinished) {
-                const lenV = Math.min(75, Math.max(30, Math.abs(sI.v) * 10));
+                const lenV = Math.min(65, Math.max(35, Math.abs(sI.v) * 20));
+                const dirV = sI.v >= 0 ? 1 : -1;
+                // วางลอยขนานกับพื้นเอียงเหนือขอบหน้าของกล่อง โดยเว้นระยะไม่ให้ทับ N, mg sinθ หรือตัวกล่อง
                 const vStart = {
-                    x: pBox.x + (boxH / 2 + 18) * uOut.x,
-                    y: pBox.y + (boxH / 2 + 18) * uOut.y
+                    x: pBox.x + 20 * uPar.x + (boxH / 2 + 20) * uOut.x,
+                    y: pBox.y + 20 * uPar.y + (boxH / 2 + 20) * uOut.y
                 };
                 const vTip = {
-                    x: vStart.x + lenV * uPar.x,
-                    y: vStart.y + lenV * uPar.y
+                    x: vStart.x + lenV * dirV * uPar.x,
+                    y: vStart.y + lenV * dirV * uPar.y
                 };
-                drawVectorArrow(ctx, vStart.x, vStart.y, vTip.x, vTip.y, '#059669', `v = ${Math.abs(sI.v).toFixed(2)} m/s (ทิศการเคลื่อนที่)`, 'right', 10);
+                drawVectorArrow(ctx, vStart.x, vStart.y, vTip.x, vTip.y, '#059669', '', 'none');
+
+                // ป้ายกำกับความเร็ววางเหนือแนวลูกศรขนานกับทางลาด (ในทิศ uOut ออกสู่ที่ว่าง)
+                const vMid = {
+                    x: (vStart.x + vTip.x) / 2 + 13 * uOut.x,
+                    y: (vStart.y + vTip.y) / 2 + 13 * uOut.y
+                };
+                drawPhysicsText(ctx, `ความเร็ว v = ${Math.abs(sI.v).toFixed(2)} m/s`, vMid.x, vMid.y, '#059669', 'bold 12.5px Sarabun, sans-serif', 'center', 'bottom');
             }
 
             // 8. ป้ายบอกสภาวะในรูป
