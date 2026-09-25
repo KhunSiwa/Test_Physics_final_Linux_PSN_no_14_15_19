@@ -304,13 +304,12 @@
                         <div class="text-xl font-bold text-slate-800"><span id="out-i-n">0.0</span> N</div>
                     </div>
                     <div class="bg-white rounded-xl border border-slate-200 p-3 shadow-sm flex flex-col justify-center text-center">
-                        <span class="text-xs font-semibold text-slate-500 mb-1">องค์ประกอบแรงโน้มถ่วง (mg sinθ)</span>
-                        <div class="text-xl font-bold text-slate-800"><span id="out-i-mgsin">0.00</span> N</div>
+                        <span class="text-xs font-semibold text-slate-500 mb-1">แรงเสียดทานสถิตสูงสุด (fs(max))</span>
+                        <div class="text-xl font-bold text-slate-800"><span id="out-i-fsmax">0.00</span> N</div>
                     </div>
                     <div class="bg-orange-50 rounded-xl border border-orange-200 p-3 shadow-sm flex flex-col justify-center text-center">
                         <span id="lbl-i-f" class="text-xs font-semibold text-orange-600 mb-1">แรงเสียดทานจลน์ (fk)</span>
                         <div class="text-xl font-bold text-orange-700"><span id="out-i-f">0.00</span> N</div>
-                        <div class="text-[11px] text-slate-400 mt-0.5 font-medium">fs(max) = <span id="out-i-fsmax">0.00</span> N</div>
                     </div>
                     <div class="bg-blue-50 rounded-xl border border-blue-200 p-3 shadow-sm flex flex-col justify-center text-center">
                         <span class="text-xs font-semibold text-blue-600 mb-1">แรงลัพธ์ (ΣF)</span>
@@ -1152,15 +1151,10 @@
 
         function updateUII(phys) {
             sI.outN.textContent = phys.N.toFixed(2);
-            sI.outMgsin.textContent = phys.F_gx.toFixed(2);
-            sI.outF.textContent = Math.abs(phys.f).toFixed(2);
-            if (sI.lblF) {
-                const isMoving = Math.abs(sI.v) > 0.05 || (phys.F_gx > phys.fs_max);
-                sI.lblF.textContent = isMoving ? 'แรงเสียดทานจลน์ (fk)' : 'แรงเสียดทานสถิต (fs)';
-            }
-            if (sI.outFsmax) {
-                sI.outFsmax.textContent = phys.fs_max.toFixed(2);
-            }
+            if (sI.outMgsin) sI.outMgsin.textContent = phys.F_gx.toFixed(2);
+            if (sI.outFsmax) sI.outFsmax.textContent = phys.fs_max.toFixed(2);
+            if (sI.outF) sI.outF.textContent = phys.fk.toFixed(2);
+            if (sI.lblF) sI.lblF.textContent = 'แรงเสียดทานจลน์ (fk)';
             sI.outFnet.textContent = Math.abs(phys.Fnet).toFixed(2);
             sI.outA.textContent = (Math.abs(phys.a) < 1e-4 ? 0 : phys.a).toFixed(2);
             sI.outV.textContent = (Math.abs(sI.v) < 1e-4 ? 0 : sI.v).toFixed(2);
