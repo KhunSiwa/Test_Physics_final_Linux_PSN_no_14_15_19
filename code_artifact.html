@@ -95,7 +95,7 @@
                         <div class="text-xl font-bold text-slate-800"><span id="out-h-n">0.0</span> N</div>
                     </div>
                     <div class="bg-white rounded-xl border border-slate-200 p-3 shadow-sm flex flex-col justify-center text-center">
-                        <span class="text-xs font-semibold text-slate-500 mb-1">แรงเสียดทานสถิตสูงสุด (fs)</span>
+                        <span class="text-xs font-semibold text-slate-500 mb-1">แรงเสียดทานสถิตสูงสุด (fs(max))</span>
                         <div class="text-xl font-bold text-slate-800"><span id="out-h-fsmax">0.0</span> N</div>
                     </div>
                     <div class="bg-orange-50 rounded-xl border border-orange-200 p-3 shadow-sm flex flex-col justify-center text-center">
@@ -304,12 +304,13 @@
                         <div class="text-xl font-bold text-slate-800"><span id="out-i-n">0.0</span> N</div>
                     </div>
                     <div class="bg-white rounded-xl border border-slate-200 p-3 shadow-sm flex flex-col justify-center text-center">
-                        <span class="text-xs font-semibold text-slate-500 mb-1">องค์ประกอบแรงโน้มถ่วง</span>
-                        <div class="text-xl font-bold text-slate-800"><span id="out-i-mgsin">0.0</span> N</div>
+                        <span class="text-xs font-semibold text-slate-500 mb-1">องค์ประกอบแรงโน้มถ่วง (mg sinθ)</span>
+                        <div class="text-xl font-bold text-slate-800"><span id="out-i-mgsin">0.00</span> N</div>
                     </div>
                     <div class="bg-orange-50 rounded-xl border border-orange-200 p-3 shadow-sm flex flex-col justify-center text-center">
-                        <span class="text-xs font-semibold text-orange-600 mb-1">แรงเสียดทาน (f)</span>
-                        <div class="text-xl font-bold text-orange-700"><span id="out-i-f">0.0</span> N</div>
+                        <span id="lbl-i-f" class="text-xs font-semibold text-orange-600 mb-1">แรงเสียดทานจลน์ (fk)</span>
+                        <div class="text-xl font-bold text-orange-700"><span id="out-i-f">0.00</span> N</div>
+                        <div class="text-[11px] text-slate-400 mt-0.5 font-medium">fs(max) = <span id="out-i-fsmax">0.00</span> N</div>
                     </div>
                     <div class="bg-blue-50 rounded-xl border border-blue-200 p-3 shadow-sm flex flex-col justify-center text-center">
                         <span class="text-xs font-semibold text-blue-600 mb-1">แรงลัพธ์ (ΣF)</span>
@@ -748,13 +749,13 @@
                 sH.resStatus.textContent = "การทดลองเสร็จสิ้น (วัตถุถึงจุดสิ้นสุดของพื้นราบ)";
                 sH.desc.textContent = "การทดลองเสร็จสิ้น — วัตถุเคลื่อนที่จนถึงจุดสิ้นสุดของพื้นราบแล้ว ความเร็วเป็น 0 m/s";
             } else {
-                const isMoving = Math.abs(sH.v) > 0.05 || (Math.abs(phys.F_app) > phys.fs_max && Math.abs(phys.a) > 0 && sH.isRunning);
+                const isMoving = Math.abs(sH.v) > 0.05 || Math.abs(phys.F_app) > phys.fs_max;
                 if (isMoving) {
                     sH.statInd.className = "w-3 h-3 rounded-full bg-emerald-500 animate-pulse";
-                    sH.statTxt.textContent = "สถานะ: วัตถุกำลังเคลื่อนที่";
+                    sH.statTxt.textContent = sH.isRunning ? "สถานะ: วัตถุกำลังเคลื่อนที่" : "สถานะ: วัตถุเคลื่อนที่";
                     sH.badge.className = "text-xs font-semibold px-3 py-1 rounded-full bg-emerald-100 text-emerald-800";
-                    sH.badge.textContent = "วัตถุกำลังเคลื่อนที่";
-                    sH.resStatus.textContent = "วัตถุกำลังเคลื่อนที่";
+                    sH.badge.textContent = "วัตถุเคลื่อนที่";
+                    sH.resStatus.textContent = "วัตถุเคลื่อนที่";
                     sH.desc.textContent = "วัตถุเริ่มเคลื่อนที่ เพราะแรงที่ทำให้วัตถุเคลื่อนที่มากกว่าแรงเสียดทานสถิตสูงสุด";
                 } else {
                     sH.statInd.className = "w-3 h-3 rounded-full bg-slate-400";
@@ -808,7 +809,11 @@
                     'a = ΣF / m = ' + Math.abs(p.Fnet).toFixed(2) + ' / ' + p.m + ' = <span class="font-bold text-purple-700">' + p.a.toFixed(2) + ' m/s²</span>' +
                     '</div>';
             } else {
-                html += '<div>' +
+                html += '<div class="border-b border-slate-200 pb-2">' +
+                    '<span class="text-blue-600 font-bold">ขั้นที่ 4: คำนวณแรงเสียดทานสถิตที่เกิดขึ้นจริง (fs)</span><br>' +
+                    'fs = |F| = <span class="font-bold text-slate-900">' + Math.abs(p.f).toFixed(2) + ' N</span> (แรงเสียดทานสถิตมีขนาดเท่ากับแรงภายนอกที่พยายามดึง)<br>' +
+                    '</div>' +
+                    '<div>' +
                     '<span class="text-blue-600 font-bold">ผลสรุป:</span><br>' +
                     'แรงลัพธ์ ΣF = 0.00 N<br>' +
                     'ความเร่ง a = 0.00 m/s²' +
@@ -884,13 +889,14 @@
             // 4.4 แรงเสียดทาน f (แนบที่ผิวสัมผัสพื้น ชี้ต้านการเคลื่อนที่)
             if (Math.abs(phys.f) > 0.05) {
                 const lenFric = Math.min(125, Math.max(30, Math.abs(phys.f) * vScale));
-                const isMove = Math.abs(sH.v) > 0.05 || (Math.abs(phys.F_app) > phys.fs_max && Math.abs(phys.a) > 0 && sH.isRunning);
+                const isMove = Math.abs(sH.v) > 0.05 || Math.abs(phys.F_app) > phys.fs_max;
                 const labelFric = isMove 
                     ? `fk = ${phys.fk.toFixed(1)} N` 
                     : `fs = ${Math.abs(phys.f).toFixed(1)} N`;
                 
                 const fricStartX = boxCenterX;
-                const fricDir = -Math.sign(phys.F_app || 1);
+                const dirMotion = Math.abs(sH.v) > 0.05 ? Math.sign(sH.v) : Math.sign(phys.F_app || 1);
+                const fricDir = -dirMotion;
                 const fricTipX = fricStartX + fricDir * lenFric;
                 drawVectorArrow(ctx, fricStartX, baseY - 2, fricTipX, baseY - 2, '#dc2626', '', 'none');
                 drawPhysicsText(ctx, labelFric, fricTipX + fricDir * 8, baseY - 12, '#dc2626', 'bold 13px Sarabun, sans-serif', fricDir > 0 ? 'left' : 'right', 'bottom');
@@ -909,7 +915,7 @@
             }
 
             // 5. สัญลักษณ์แรงลัพธ์ ΣF และความเร่ง a บนภาพ
-            const isMovingH = Math.abs(sH.v) > 0.05 || (Math.abs(phys.F_app) > phys.fs_max && Math.abs(phys.a) > 0 && sH.isRunning);
+            const isMovingH = Math.abs(sH.v) > 0.05 || Math.abs(phys.F_app) > phys.fs_max;
             drawPhysicsText(ctx, `ΣF = ${Math.abs(phys.Fnet).toFixed(1)} N`, w - 24, 25, isMovingH ? '#2563eb' : '#64748b', 'bold 14px Sarabun, sans-serif', 'right', 'top');
             if (isMovingH && Math.abs(phys.a) > 0) {
                 drawPhysicsText(ctx, `a = ${Math.abs(phys.a).toFixed(2)} m/s²`, w - 24, 46, '#7c3aed', 'bold 14px Sarabun, sans-serif', 'right', 'top');
@@ -980,12 +986,23 @@
             sH.valG.textContent = sH.inG.value + ' m/s²';
             
             if (!sH.isRunning) {
+                sH.dist = 0;
+                sH.v = 0;
+                sH.isFinished = false;
+                sH.btnPlay.style.display = 'flex';
+                sH.btnPause.style.display = 'none';
                 updateUIH(calcH());
                 drawH();
+            } else {
+                updateUIH(calcH());
             }
         }
 
-        [sH.inM, sH.inF, sH.inUs, sH.inUk, sH.inG].forEach(el => el.addEventListener('input', readInputsH));
+        const inputsH = [sH.inM, sH.inF, sH.inUs, sH.inUk, sH.inG];
+        inputsH.forEach(el => {
+            el.addEventListener('input', readInputsH);
+            el.addEventListener('change', readInputsH);
+        });
 
         function togglePlayH() {
             if (sH.isFinished) {
@@ -1057,6 +1074,8 @@
             outN: document.getElementById('out-i-n'),
             outMgsin: document.getElementById('out-i-mgsin'),
             outF: document.getElementById('out-i-f'),
+            lblF: document.getElementById('lbl-i-f'),
+            outFsmax: document.getElementById('out-i-fsmax'),
             outFnet: document.getElementById('out-i-fnet'),
             outA: document.getElementById('out-i-a'),
             outV: document.getElementById('out-i-v'),
@@ -1132,10 +1151,17 @@
         }
 
         function updateUII(phys) {
-            sI.outN.textContent = phys.N.toFixed(1);
-            sI.outMgsin.textContent = phys.F_gx.toFixed(1);
-            sI.outF.textContent = Math.abs(phys.f).toFixed(1);
-            sI.outFnet.textContent = Math.abs(phys.Fnet).toFixed(1);
+            sI.outN.textContent = phys.N.toFixed(2);
+            sI.outMgsin.textContent = phys.F_gx.toFixed(2);
+            sI.outF.textContent = Math.abs(phys.f).toFixed(2);
+            if (sI.lblF) {
+                const isMoving = Math.abs(sI.v) > 0.05 || (phys.F_gx > phys.fs_max);
+                sI.lblF.textContent = isMoving ? 'แรงเสียดทานจลน์ (fk)' : 'แรงเสียดทานสถิต (fs)';
+            }
+            if (sI.outFsmax) {
+                sI.outFsmax.textContent = phys.fs_max.toFixed(2);
+            }
+            sI.outFnet.textContent = Math.abs(phys.Fnet).toFixed(2);
             sI.outA.textContent = (Math.abs(phys.a) < 1e-4 ? 0 : phys.a).toFixed(2);
             sI.outV.textContent = (Math.abs(sI.v) < 1e-4 ? 0 : sI.v).toFixed(2);
 
@@ -1147,10 +1173,10 @@
                 sI.resStatus.textContent = "การทดลองเสร็จสิ้น (วัตถุถึงปลายพื้นเอียง)";
                 sI.desc.textContent = "การทดลองเสร็จสิ้น — วัตถุเคลื่อนที่ไถลลงมาจนถึงปลายพื้นเอียงแล้ว ความเร็วเป็น 0 m/s";
             } else {
-                const isMoving = Math.abs(sI.v) > 0.05 || (phys.F_gx > phys.fs_max && Math.abs(phys.a) > 0 && sI.isRunning);
+                const isMoving = Math.abs(sI.v) > 0.05 || (phys.F_gx > phys.fs_max);
                 if (isMoving) {
                     sI.statInd.className = "w-3 h-3 rounded-full bg-emerald-500 animate-pulse";
-                    sI.statTxt.textContent = "สถานะ: วัตถุกำลังไถลลงตามพื้นเอียง";
+                    sI.statTxt.textContent = sI.isRunning ? "สถานะ: วัตถุกำลังไถลลงตามพื้นเอียง" : "สถานะ: วัตถุเคลื่อนที่ลงตามพื้นเอียง";
                     sI.badge.className = "text-xs font-semibold px-3 py-1 rounded-full bg-emerald-100 text-emerald-800";
                     sI.badge.textContent = "วัตถุเคลื่อนที่ลงตามพื้นเอียง";
                     sI.resStatus.textContent = "วัตถุเคลื่อนที่ลงตามพื้นเอียง";
@@ -1211,7 +1237,11 @@
                     'a = ΣF / m = ' + Math.abs(p.Fnet).toFixed(2) + ' / ' + p.m + ' = <span class="font-bold text-purple-700">' + p.a.toFixed(2) + ' m/s²</span>' +
                     '</div>';
             } else {
-                html += '<div>' +
+                html += '<div class="border-b border-slate-200 pb-2">' +
+                    '<span class="text-indigo-600 font-bold">ขั้นที่ 5: คำนวณแรงเสียดทานสถิตที่เกิดขึ้นจริง (fs)</span><br>' +
+                    'fs = mg sinθ = <span class="font-bold text-slate-900">' + Math.abs(p.f).toFixed(2) + ' N</span> (แรงเสียดทานสถิตต้านแรงดึงลงอย่างสมบูรณ์)<br>' +
+                    '</div>' +
+                    '<div>' +
                     '<span class="text-indigo-600 font-bold">ผลสรุป:</span><br>' +
                     'แรงลัพธ์ ΣF = 0.00 N<br>' +
                     'ความเร่ง a = 0.00 m/s²' +
@@ -1351,7 +1381,7 @@
                 x: pBox.x + lenMgCos * uIn.x,
                 y: pBox.y + lenMgCos * uIn.y
             };
-            drawVectorArrow(ctx, pBox.x, pBox.y, tipMgCos.x, tipMgCos.y, '#0d9488', `mg cosθ = ${phys.N.toFixed(1)} N`, 'left', 8);
+            drawVectorArrow(ctx, pBox.x, pBox.y, tipMgCos.x, tipMgCos.y, '#0d9488', `mg cosθ = ${phys.N.toFixed(2)} N`, 'left', 8);
 
             // 7.3 องค์ประกอบ mg sinθ (ขนานกับพื้นเอียง ชี้ลงสู่ด้านล่าง)
             const lenMgSin = lenMg * sinTh;
@@ -1359,7 +1389,7 @@
                 x: pBox.x + lenMgSin * uPar.x,
                 y: pBox.y + lenMgSin * uPar.y
             };
-            drawVectorArrow(ctx, pBox.x, pBox.y, tipMgSin.x, tipMgSin.y, '#0284c7', `mg sinθ = ${phys.F_gx.toFixed(1)} N`, 'right', 8);
+            drawVectorArrow(ctx, pBox.x, pBox.y, tipMgSin.x, tipMgSin.y, '#0284c7', `mg sinθ = ${phys.F_gx.toFixed(2)} N`, 'right', 8);
 
             // 7.4 เส้นประแสดงการแตกแรง (Vector Resolution Lines เหมือนในหนังสือเรียน)
             ctx.save();
@@ -1392,15 +1422,15 @@
                 x: pBox.x + lenN * uOut.x,
                 y: pBox.y + lenN * uOut.y
             };
-            drawVectorArrow(ctx, pBox.x, pBox.y, tipN.x, tipN.y, '#7c3aed', `N = ${phys.N.toFixed(1)} N`, 'above', 8);
+            drawVectorArrow(ctx, pBox.x, pBox.y, tipN.x, tipN.y, '#7c3aed', `N = ${phys.N.toFixed(2)} N`, 'above', 8);
 
             // 7.7 แรงเสียดทาน f (แนบตามแนวผิวทางลาด ชี้ขึ้นต้านการไถล)
             if (Math.abs(phys.f) > 0.05) {
                 const lenFric = Math.min(115, Math.max(30, (Math.abs(phys.f) / phys.W) * lenMg));
-                const isMove = Math.abs(sI.v) > 0.05 || (phys.F_gx > phys.fs_max && Math.abs(phys.a) > 0 && sI.isRunning);
+                const isMove = Math.abs(sI.v) > 0.05 || (phys.F_gx > phys.fs_max);
                 const labelFric = isMove 
-                    ? `fk = ${phys.fk.toFixed(1)} N` 
-                    : `fs = ${Math.abs(phys.f).toFixed(1)} N`;
+                    ? `fk = ${phys.fk.toFixed(2)} N` 
+                    : `fs = ${Math.abs(phys.f).toFixed(2)} N`;
                 
                 const tipFric = {
                     x: pContact.x - lenFric * uPar.x,
@@ -1437,8 +1467,8 @@
             }
 
             // 8. สัญลักษณ์แรงลัพธ์ ΣF และความเร่ง a บนภาพ
-            const isMovingI = Math.abs(sI.v) > 0.05 || (phys.F_gx > phys.fs_max && Math.abs(phys.a) > 0 && sI.isRunning);
-            drawPhysicsText(ctx, `ΣF = ${Math.abs(phys.Fnet).toFixed(1)} N`, w - 24, 25, isMovingI ? '#0284c7' : '#64748b', 'bold 14px Sarabun, sans-serif', 'right', 'top');
+            const isMovingI = Math.abs(sI.v) > 0.05 || (phys.F_gx > phys.fs_max);
+            drawPhysicsText(ctx, `ΣF = ${Math.abs(phys.Fnet).toFixed(2)} N`, w - 24, 25, isMovingI ? '#0284c7' : '#64748b', 'bold 14px Sarabun, sans-serif', 'right', 'top');
             if (isMovingI && Math.abs(phys.a) > 0) {
                 drawPhysicsText(ctx, `a = ${Math.abs(phys.a).toFixed(2)} m/s²`, w - 24, 46, '#7c3aed', 'bold 14px Sarabun, sans-serif', 'right', 'top');
             }
@@ -1514,12 +1544,23 @@
             sI.valG.textContent = sI.inG.value + ' m/s²';
             
             if (!sI.isRunning) {
+                sI.dist = 0;
+                sI.v = 0;
+                sI.isFinished = false;
+                sI.btnPlay.style.display = 'flex';
+                sI.btnPause.style.display = 'none';
                 updateUII(calcI());
                 drawI();
+            } else {
+                updateUII(calcI());
             }
         }
 
-        [sI.inM, sI.inTh, sI.inUs, sI.inUk, sI.inG].forEach(el => el.addEventListener('input', readInputsI));
+        const inputsI = [sI.inM, sI.inTh, sI.inUs, sI.inUk, sI.inG];
+        inputsI.forEach(el => {
+            el.addEventListener('input', readInputsI);
+            el.addEventListener('change', readInputsI);
+        });
 
         function togglePlayI() {
             if (sI.isFinished) {
