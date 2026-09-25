@@ -103,7 +103,7 @@
                         <div class="text-xl font-bold text-orange-700"><span id="out-h-fk">0.0</span> N</div>
                     </div>
                     <div class="bg-blue-50 rounded-xl border border-blue-200 p-3 shadow-sm flex flex-col justify-center text-center">
-                        <span class="text-xs font-semibold text-blue-600 mb-1">แรงลัพธ์ (Fลัพธ์)</span>
+                        <span class="text-xs font-semibold text-blue-600 mb-1">แรงลัพธ์ (ΣF)</span>
                         <div class="text-xl font-bold text-blue-700"><span id="out-h-fnet">0.0</span> N</div>
                     </div>
                     <div class="bg-purple-50 rounded-xl border border-purple-200 p-3 shadow-sm flex flex-col justify-center text-center">
@@ -177,7 +177,7 @@
                         <div class="p-3 bg-emerald-50/70 border border-emerald-100 rounded-xl">
                             <div class="text-xs text-emerald-700 font-semibold mb-1">ค่าความเร่งจากการคำนวณด้วยมือ</div>
                             <div id="chk-manual-h" class="text-xl font-bold text-emerald-900">3.00 m/s²</div>
-                            <div class="text-xs text-emerald-600 mt-1">คำนวณจากสูตร a = Fลัพธ์ / m</div>
+                            <div class="text-xs text-emerald-600 mt-1">คำนวณจากสูตร a = ΣF / m</div>
                         </div>
                         <div class="p-3 bg-blue-50/70 border border-blue-100 rounded-xl">
                             <div class="text-xs text-blue-700 font-semibold mb-1">ค่าความเร่งจากการจำลอง</div>
@@ -269,11 +269,11 @@
                                     <div class="text-slate-600 mt-0.5">แรงเสียดทานจลน์ คือแรงต้านขณะที่วัตถุกำลังเคลื่อนที่</div>
                                 </div>
                                 <div>
-                                    <div class="font-mono font-bold text-blue-800">Fลัพธ์ = F - fk</div>
+                                    <div class="font-mono font-bold text-blue-800">ΣF = F - fk</div>
                                     <div class="text-slate-600 mt-0.5">แรงลัพธ์ในแนวราบเมื่อวัตถุเคลื่อนที่</div>
                                 </div>
                                 <div>
-                                    <div class="font-mono font-bold text-blue-800">a = Fลัพธ์ / m</div>
+                                    <div class="font-mono font-bold text-blue-800">a = ΣF / m</div>
                                     <div class="text-slate-600 mt-0.5">ความเร่งตามกฎการเคลื่อนที่ข้อที่ 2 ของนิวตัน</div>
                                 </div>
                             </div>
@@ -312,7 +312,7 @@
                         <div class="text-xl font-bold text-orange-700"><span id="out-i-f">0.0</span> N</div>
                     </div>
                     <div class="bg-blue-50 rounded-xl border border-blue-200 p-3 shadow-sm flex flex-col justify-center text-center">
-                        <span class="text-xs font-semibold text-blue-600 mb-1">แรงลัพธ์ (Fลัพธ์)</span>
+                        <span class="text-xs font-semibold text-blue-600 mb-1">แรงลัพธ์ (ΣF)</span>
                         <div class="text-xl font-bold text-blue-700"><span id="out-i-fnet">0.0</span> N</div>
                     </div>
                     <div class="bg-purple-50 rounded-xl border border-purple-200 p-3 shadow-sm flex flex-col justify-center text-center">
@@ -482,11 +482,11 @@
                                     <div class="text-slate-600 mt-0.5">แรงเสียดทานจลน์ต้านการไถลลงตามพื้นเอียง</div>
                                 </div>
                                 <div>
-                                    <div class="font-mono font-bold text-indigo-800">Fลัพธ์ = mg sinθ - fk</div>
+                                    <div class="font-mono font-bold text-indigo-800">ΣF = mg sinθ - fk</div>
                                     <div class="text-slate-600 mt-0.5">แรงลัพธ์ตามแนวพื้นเอียงเมื่อวัตถุเคลื่อนที่ลง</div>
                                 </div>
                                 <div>
-                                    <div class="font-mono font-bold text-indigo-800">a = Fลัพธ์ / m</div>
+                                    <div class="font-mono font-bold text-indigo-800">a = ΣF / m</div>
                                     <div class="text-slate-600 mt-0.5">ความเร่งของวัตถุขณะเคลื่อนที่ลงตามพื้นเอียง</div>
                                 </div>
                             </div>
@@ -800,17 +800,17 @@
                     'fk = μkN = ' + p.uk + ' × ' + p.N.toFixed(2) + ' = <span class="font-bold text-slate-900">' + p.fk.toFixed(2) + ' N</span>' +
                     '</div>' +
                     '<div class="border-b border-slate-200 pb-2">' +
-                    '<span class="text-blue-600 font-bold">ขั้นที่ 5: คำนวณแรงลัพธ์ (Fลัพธ์)</span><br>' +
-                    'Fลัพธ์ = |F| - fk = ' + Math.abs(p.F_app).toFixed(2) + ' - ' + p.fk.toFixed(2) + ' = <span class="font-bold text-slate-900">' + Math.abs(p.Fnet).toFixed(2) + ' N</span>' +
+                    '<span class="text-blue-600 font-bold">ขั้นที่ 5: คำนวณแรงลัพธ์ (ΣF)</span><br>' +
+                    'ΣF = |F| - fk = ' + Math.abs(p.F_app).toFixed(2) + ' - ' + p.fk.toFixed(2) + ' = <span class="font-bold text-slate-900">' + Math.abs(p.Fnet).toFixed(2) + ' N</span>' +
                     '</div>' +
                     '<div>' +
                     '<span class="text-blue-600 font-bold">ขั้นที่ 6: คำนวณความเร่ง (a)</span><br>' +
-                    'a = Fลัพธ์ / m = ' + Math.abs(p.Fnet).toFixed(2) + ' / ' + p.m + ' = <span class="font-bold text-purple-700">' + p.a.toFixed(2) + ' m/s²</span>' +
+                    'a = ΣF / m = ' + Math.abs(p.Fnet).toFixed(2) + ' / ' + p.m + ' = <span class="font-bold text-purple-700">' + p.a.toFixed(2) + ' m/s²</span>' +
                     '</div>';
             } else {
                 html += '<div>' +
                     '<span class="text-blue-600 font-bold">ผลสรุป:</span><br>' +
-                    'แรงลัพธ์ Fลัพธ์ = 0.00 N<br>' +
+                    'แรงลัพธ์ ΣF = 0.00 N<br>' +
                     'ความเร่ง a = 0.00 m/s²' +
                     '</div>';
             }
@@ -865,57 +865,55 @@
             // 4. วาดเวกเตอร์แรง Free-body diagram
             const vScale = 2.8;
 
-            // 4.1 แรงปฏิกิริยาตั้งฉาก N (ชี้ขึ้นในแนวดิ่ง ตั้งฉากกับพื้น)
+            // 4.1 แรงปฏิกิริยาตั้งฉาก N (ชี้ขึ้นในแนวดิ่ง)
             const lenN = Math.min(105, Math.max(35, phys.N * vScale * 0.8));
-            drawVectorArrow(ctx, boxCenterX, boxCenterY, boxCenterX, boxCenterY - lenN, '#7c3aed', `N = ${phys.N.toFixed(1)} N (แรงปฏิกิริยาตั้งฉาก)`, 'above', 8);
+            drawVectorArrow(ctx, boxCenterX, boxCenterY, boxCenterX, boxCenterY - lenN, '#7c3aed', `N = ${phys.N.toFixed(1)} N`, 'above', 8);
 
             // 4.2 แรงโน้มถ่วง mg (น้ำหนัก ชี้ลงในแนวดิ่ง)
             const lenMg = lenN;
-            drawVectorArrow(ctx, boxCenterX, boxCenterY, boxCenterX, boxCenterY + lenMg, '#475569', `mg = ${phys.N.toFixed(1)} N (น้ำหนัก)`, 'below', 8);
+            drawVectorArrow(ctx, boxCenterX, boxCenterY, boxCenterX, boxCenterY + lenMg, '#475569', `mg = ${phys.N.toFixed(1)} N`, 'below', 8);
 
-            // 4.3 แรงภายนอก F (ชี้ไปทางขวา)
+            // 4.3 แรงภายนอก F (ชี้ไปทางขวาหรือซ้าย)
             if (Math.abs(phys.F_app) > 0.05) {
                 const lenF = Math.min(130, Math.max(35, Math.abs(phys.F_app) * vScale));
                 const dirF = Math.sign(phys.F_app);
                 const fStartX = boxCenterX + (dirF * boxW / 2);
-                drawVectorArrow(ctx, fStartX, boxCenterY, fStartX + dirF * lenF, boxCenterY, '#2563eb', `F = ${Math.abs(phys.F_app).toFixed(1)} N (แรงภายนอก)`, dirF > 0 ? 'right' : 'left', 10);
+                drawVectorArrow(ctx, fStartX, boxCenterY, fStartX + dirF * lenF, boxCenterY, '#2563eb', `F = ${Math.abs(phys.F_app).toFixed(1)} N`, dirF > 0 ? 'right' : 'left', 8);
             }
 
-            // 4.4 แรงเสียดทาน f (แนบที่ผิวสัมผัสพื้น ชี้ต้านแรง F)
+            // 4.4 แรงเสียดทาน f (แนบที่ผิวสัมผัสพื้น ชี้ต้านการเคลื่อนที่)
             if (Math.abs(phys.f) > 0.05) {
                 const lenFric = Math.min(125, Math.max(30, Math.abs(phys.f) * vScale));
                 const isMove = Math.abs(sH.v) > 0.05 || (Math.abs(phys.F_app) > phys.fs_max && Math.abs(phys.a) > 0 && sH.isRunning);
                 const labelFric = isMove 
-                    ? `fk = ${phys.fk.toFixed(1)} N (แรงเสียดทานจลน์)` 
-                    : `fs = ${Math.abs(phys.f).toFixed(1)} N (แรงเสียดทานสถิต)`;
+                    ? `fk = ${phys.fk.toFixed(1)} N` 
+                    : `fs = ${Math.abs(phys.f).toFixed(1)} N`;
                 
                 const fricStartX = boxCenterX;
                 const fricDir = -Math.sign(phys.F_app || 1);
-                drawVectorArrow(ctx, fricStartX, baseY - 2, fricStartX + fricDir * lenFric, baseY - 2, '#dc2626', labelFric, fricDir > 0 ? 'right' : 'left', 12);
+                const fricTipX = fricStartX + fricDir * lenFric;
+                drawVectorArrow(ctx, fricStartX, baseY - 2, fricTipX, baseY - 2, '#dc2626', '', 'none');
+                drawPhysicsText(ctx, labelFric, fricTipX + fricDir * 8, baseY - 12, '#dc2626', 'bold 13px Sarabun, sans-serif', fricDir > 0 ? 'left' : 'right', 'bottom');
             }
 
-            // 4.5 ลูกศรแสดงทิศทางการเคลื่อนที่ (แสดงเฉพาะเมื่อวัตถุกำลังเคลื่อนที่จริง)
+            // 4.5 ลูกศรแสดงทิศทางการเคลื่อนที่และความเร็ว (เฉพาะเมื่อวัตถุกำลังเคลื่อนที่จริง)
             if (Math.abs(sH.v) > 0.05 && !sH.isFinished) {
                 const dirV = Math.sign(sH.v);
-                const lenV = Math.min(80, Math.max(30, Math.abs(sH.v) * 12));
-                const vY = boxTop - 25;
-                drawVectorArrow(ctx, boxCenterX, vY, boxCenterX + dirV * lenV, vY, '#059669', `v = ${Math.abs(sH.v).toFixed(2)} m/s (ทิศการเคลื่อนที่)`, dirV > 0 ? 'right' : 'left', 10);
+                const lenV = Math.min(70, Math.max(35, Math.abs(sH.v) * 15));
+                // วางด้านหน้ากล่องตามทิศการเคลื่อนที่ ลอยในพื้นที่ว่างเหนือแนวแรง F
+                const vStartX = dirV > 0 ? (boxCenterX + boxW / 2 + 15) : (boxCenterX - boxW / 2 - 15);
+                const vTipX = vStartX + dirV * lenV;
+                const vY = boxTop - 18;
+                drawVectorArrow(ctx, vStartX, vY, vTipX, vY, '#059669', '', 'none');
+                drawPhysicsText(ctx, `v = ${Math.abs(sH.v).toFixed(2)} m/s`, (vStartX + vTipX) / 2, vY - 11, '#059669', 'bold 13px Sarabun, sans-serif', 'center', 'bottom');
             }
 
-            // 5. ป้ายสถานะจำลองในรูป
-            let stateText = "";
-            let stateColor = "";
-            if (sH.isFinished) {
-                stateText = "การทดลองเสร็จสิ้น — วัตถุถึงจุดสิ้นสุดของพื้นราบ";
-                stateColor = "#2563eb";
-            } else if (Math.abs(sH.v) > 0.05 || (Math.abs(phys.F_app) > phys.fs_max && Math.abs(phys.a) > 0 && sH.isRunning)) {
-                stateText = "สภาวะ: วัตถุกำลังเคลื่อนที่ (F > fs(max))";
-                stateColor = "#059669";
-            } else {
-                stateText = "สภาวะ: วัตถุอยู่นิ่ง (F ≤ fs(max))";
-                stateColor = "#64748b";
+            // 5. สัญลักษณ์แรงลัพธ์ ΣF และความเร่ง a บนภาพ
+            const isMovingH = Math.abs(sH.v) > 0.05 || (Math.abs(phys.F_app) > phys.fs_max && Math.abs(phys.a) > 0 && sH.isRunning);
+            drawPhysicsText(ctx, `ΣF = ${Math.abs(phys.Fnet).toFixed(1)} N`, w - 24, 25, isMovingH ? '#2563eb' : '#64748b', 'bold 14px Sarabun, sans-serif', 'right', 'top');
+            if (isMovingH && Math.abs(phys.a) > 0) {
+                drawPhysicsText(ctx, `a = ${Math.abs(phys.a).toFixed(2)} m/s²`, w - 24, 46, '#7c3aed', 'bold 14px Sarabun, sans-serif', 'right', 'top');
             }
-            drawPhysicsText(ctx, stateText, w - 24, 25, stateColor, 'bold 14px Sarabun, sans-serif', 'right', 'top');
         }
 
         function loopH(timestamp) {
@@ -1205,17 +1203,17 @@
                     'fk = μkN = ' + p.uk + ' × ' + p.N.toFixed(2) + ' = <span class="font-bold text-slate-900">' + p.fk.toFixed(2) + ' N</span>' +
                     '</div>' +
                     '<div class="border-b border-slate-200 pb-2">' +
-                    '<span class="text-indigo-600 font-bold">ขั้นที่ 6: คำนวณแรงลัพธ์ (Fลัพธ์)</span><br>' +
-                    'Fลัพธ์ = mg sinθ - fk = ' + p.F_gx.toFixed(2) + ' - ' + p.fk.toFixed(2) + ' = <span class="font-bold text-slate-900">' + Math.abs(p.Fnet).toFixed(2) + ' N</span>' +
+                    '<span class="text-indigo-600 font-bold">ขั้นที่ 6: คำนวณแรงลัพธ์ (ΣF)</span><br>' +
+                    'ΣF = mg sinθ - fk = ' + p.F_gx.toFixed(2) + ' - ' + p.fk.toFixed(2) + ' = <span class="font-bold text-slate-900">' + Math.abs(p.Fnet).toFixed(2) + ' N</span>' +
                     '</div>' +
                     '<div>' +
                     '<span class="text-indigo-600 font-bold">ขั้นที่ 7: คำนวณความเร่ง (a)</span><br>' +
-                    'a = Fลัพธ์ / m = ' + Math.abs(p.Fnet).toFixed(2) + ' / ' + p.m + ' = <span class="font-bold text-purple-700">' + p.a.toFixed(2) + ' m/s²</span>' +
+                    'a = ΣF / m = ' + Math.abs(p.Fnet).toFixed(2) + ' / ' + p.m + ' = <span class="font-bold text-purple-700">' + p.a.toFixed(2) + ' m/s²</span>' +
                     '</div>';
             } else {
                 html += '<div>' +
                     '<span class="text-indigo-600 font-bold">ผลสรุป:</span><br>' +
-                    'แรงลัพธ์ Fลัพธ์ = 0.00 N<br>' +
+                    'แรงลัพธ์ ΣF = 0.00 N<br>' +
                     'ความเร่ง a = 0.00 m/s²' +
                     '</div>';
             }
@@ -1243,7 +1241,7 @@
 
             // 1. ขนาดของทางลาดสามเหลี่ยมมุมฉาก ให้พอดีกับ Canvas ทุกมุม
             const maxW = w * 0.64;
-            const maxH = h * 0.62;
+            const maxH = h * 0.50;
             const L = Math.min(520, Math.max(220, Math.min(maxW / cosTh, maxH / sinTh)));
             const wedgeW = L * cosTh;
             const wedgeH = L * sinTh;
@@ -1302,7 +1300,7 @@
             // 5. ตำแหน่งของกล่องบนพื้นเอียง
             const boxW = 80;
             const boxH = 55;
-            const minS = boxW / 2 + 10;
+            const minS = boxW / 2 + 25;
             const maxS = L - boxW / 2;
             const maxTravel = Math.max(10, maxS - minS);
             const currentDist = Math.min(maxTravel, Math.max(0, sI.dist || 0));
@@ -1339,13 +1337,13 @@
             // 7. เวกเตอร์แรง Free-body diagram บนพื้นเอียง
             const vScale = 2.8;
 
-            // 7.1 น้ำหนัก mg (ชี้ลงในแนวดิ่งจริง!)
+            // 7.1 น้ำหนัก mg (ชี้ลงในแนวดิ่งจริง)
             const lenMg = Math.min(115, Math.max(35, phys.W * vScale * 0.7));
             const tipMg = {
                 x: pBox.x,
                 y: pBox.y + lenMg
             };
-            drawVectorArrow(ctx, pBox.x, pBox.y, tipMg.x, tipMg.y, '#475569', `mg = ${phys.W.toFixed(1)} N (น้ำหนัก)`, 'below', 8);
+            drawVectorArrow(ctx, pBox.x, pBox.y, tipMg.x, tipMg.y, '#475569', `mg = ${phys.W.toFixed(1)} N`, 'below', 8);
 
             // 7.2 องค์ประกอบ mg cosθ (ตั้งฉากกับผิวเอียง ชี้กดลงในเนื้อพื้นเอียง)
             const lenMgCos = lenMg * cosTh;
@@ -1353,7 +1351,7 @@
                 x: pBox.x + lenMgCos * uIn.x,
                 y: pBox.y + lenMgCos * uIn.y
             };
-            drawVectorArrow(ctx, pBox.x, pBox.y, tipMgCos.x, tipMgCos.y, '#0d9488', `mg cosθ = ${phys.N.toFixed(1)} N`, 'left', 10);
+            drawVectorArrow(ctx, pBox.x, pBox.y, tipMgCos.x, tipMgCos.y, '#0d9488', `mg cosθ = ${phys.N.toFixed(1)} N`, 'left', 8);
 
             // 7.3 องค์ประกอบ mg sinθ (ขนานกับพื้นเอียง ชี้ลงสู่ด้านล่าง)
             const lenMgSin = lenMg * sinTh;
@@ -1361,7 +1359,7 @@
                 x: pBox.x + lenMgSin * uPar.x,
                 y: pBox.y + lenMgSin * uPar.y
             };
-            drawVectorArrow(ctx, pBox.x, pBox.y, tipMgSin.x, tipMgSin.y, '#0284c7', `mg sinθ = ${phys.F_gx.toFixed(1)} N`, 'right', 10);
+            drawVectorArrow(ctx, pBox.x, pBox.y, tipMgSin.x, tipMgSin.y, '#0284c7', `mg sinθ = ${phys.F_gx.toFixed(1)} N`, 'right', 8);
 
             // 7.4 เส้นประแสดงการแตกแรง (Vector Resolution Lines เหมือนในหนังสือเรียน)
             ctx.save();
@@ -1377,7 +1375,7 @@
             ctx.restore();
 
             // 7.5 แสดงมุม θ ระหว่างแนวดิ่ง mg กับแนวตั้งฉาก mg cosθ (ตรงตามหลักเรขาคณิต)
-            const angleArcR = 28;
+            const angleArcR = 26;
             ctx.save();
             ctx.beginPath();
             ctx.arc(pBox.x, pBox.y, angleArcR, Math.PI / 2, Math.PI / 2 + thRad, false);
@@ -1385,7 +1383,7 @@
             ctx.lineWidth = 1.5;
             ctx.stroke();
             const midAngle = Math.PI / 2 + thRad / 2;
-            drawPhysicsText(ctx, 'θ', pBox.x + (angleArcR + 12) * Math.cos(midAngle), pBox.y + (angleArcR + 12) * Math.sin(midAngle), '#0284c7', 'bold 13px Sarabun, sans-serif');
+            drawPhysicsText(ctx, 'θ', pBox.x + (angleArcR + 10) * Math.cos(midAngle), pBox.y + (angleArcR + 10) * Math.sin(midAngle), '#0284c7', 'bold 12px Sarabun, sans-serif');
             ctx.restore();
 
             // 7.6 แรงปฏิกิริยาตั้งฉาก N (ตั้งฉากกับพื้นเอียงจริง ชี้ออกจากผิวทางลาด)
@@ -1394,60 +1392,56 @@
                 x: pBox.x + lenN * uOut.x,
                 y: pBox.y + lenN * uOut.y
             };
-            drawVectorArrow(ctx, pBox.x, pBox.y, tipN.x, tipN.y, '#7c3aed', `N = ${phys.N.toFixed(1)} N (แรงปฏิกิริยาตั้งฉาก)`, 'above', 8);
+            drawVectorArrow(ctx, pBox.x, pBox.y, tipN.x, tipN.y, '#7c3aed', `N = ${phys.N.toFixed(1)} N`, 'above', 8);
 
             // 7.7 แรงเสียดทาน f (แนบตามแนวผิวทางลาด ชี้ขึ้นต้านการไถล)
             if (Math.abs(phys.f) > 0.05) {
                 const lenFric = Math.min(115, Math.max(30, (Math.abs(phys.f) / phys.W) * lenMg));
                 const isMove = Math.abs(sI.v) > 0.05 || (phys.F_gx > phys.fs_max && Math.abs(phys.a) > 0 && sI.isRunning);
                 const labelFric = isMove 
-                    ? `fk = ${phys.fk.toFixed(1)} N (แรงเสียดทานจลน์)` 
-                    : `fs = ${Math.abs(phys.f).toFixed(1)} N (แรงเสียดทานสถิต)`;
+                    ? `fk = ${phys.fk.toFixed(1)} N` 
+                    : `fs = ${Math.abs(phys.f).toFixed(1)} N`;
                 
                 const tipFric = {
                     x: pContact.x - lenFric * uPar.x,
                     y: pContact.y - lenFric * uPar.y
                 };
-                drawVectorArrow(ctx, pContact.x, pContact.y, tipFric.x, tipFric.y, '#dc2626', labelFric, 'left', 12);
+                drawVectorArrow(ctx, pContact.x, pContact.y, tipFric.x, tipFric.y, '#dc2626', '', 'none');
+                const fLabel = {
+                    x: tipFric.x - 8 * uPar.x + 10 * uOut.x,
+                    y: tipFric.y - 8 * uPar.y + 10 * uOut.y
+                };
+                drawPhysicsText(ctx, labelFric, fLabel.x, fLabel.y, '#dc2626', 'bold 13px Sarabun, sans-serif', 'right', 'bottom');
             }
 
             // 7.8 ลูกศรแสดงทิศทางการเคลื่อนที่และความเร็ว (เฉพาะเมื่อวัตถุกำลังเคลื่อนที่จริง)
             if (Math.abs(sI.v) > 0.05 && !sI.isFinished) {
                 const lenV = Math.min(65, Math.max(35, Math.abs(sI.v) * 20));
-                const dirV = sI.v >= 0 ? 1 : -1;
-                // วางลอยขนานกับพื้นเอียงเหนือขอบหน้าของกล่อง โดยเว้นระยะไม่ให้ทับ N, mg sinθ หรือตัวกล่อง
+                // วางลอยขนานกับพื้นเอียงเหนือมุมขวาบนของกล่อง ในพื้นที่ว่าง
                 const vStart = {
-                    x: pBox.x + 20 * uPar.x + (boxH / 2 + 20) * uOut.x,
-                    y: pBox.y + 20 * uPar.y + (boxH / 2 + 20) * uOut.y
+                    x: pBox.x + 32 * uPar.x + (boxH / 2 + 25) * uOut.x,
+                    y: pBox.y + 32 * uPar.y + (boxH / 2 + 25) * uOut.y
                 };
                 const vTip = {
-                    x: vStart.x + lenV * dirV * uPar.x,
-                    y: vStart.y + lenV * dirV * uPar.y
+                    x: vStart.x + lenV * uPar.x,
+                    y: vStart.y + lenV * uPar.y
                 };
                 drawVectorArrow(ctx, vStart.x, vStart.y, vTip.x, vTip.y, '#059669', '', 'none');
 
-                // ป้ายกำกับความเร็ววางเหนือแนวลูกศรขนานกับทางลาด (ในทิศ uOut ออกสู่ที่ว่าง)
+                // ป้าย v วางเหนือลูกศรในทิศ uOut (ออกสู่ที่ว่างด้านบน) มีระยะห่างกำลังดี
                 const vMid = {
-                    x: (vStart.x + vTip.x) / 2 + 13 * uOut.x,
-                    y: (vStart.y + vTip.y) / 2 + 13 * uOut.y
+                    x: (vStart.x + vTip.x) / 2 + 14 * uOut.x,
+                    y: (vStart.y + vTip.y) / 2 + 14 * uOut.y
                 };
-                drawPhysicsText(ctx, `ความเร็ว v = ${Math.abs(sI.v).toFixed(2)} m/s`, vMid.x, vMid.y, '#059669', 'bold 12.5px Sarabun, sans-serif', 'center', 'bottom');
+                drawPhysicsText(ctx, `v = ${Math.abs(sI.v).toFixed(2)} m/s`, vMid.x, vMid.y, '#059669', 'bold 13px Sarabun, sans-serif', 'center', 'bottom');
             }
 
-            // 8. ป้ายบอกสภาวะในรูป
-            let stateText = "";
-            let stateColor = "";
-            if (sI.isFinished) {
-                stateText = "การทดลองเสร็จสิ้น — วัตถุถึงปลายพื้นเอียง";
-                stateColor = "#2563eb";
-            } else if (Math.abs(sI.v) > 0.05 || (phys.F_gx > phys.fs_max && Math.abs(phys.a) > 0 && sI.isRunning)) {
-                stateText = "สภาวะ: วัตถุกำลังไถลลงตามพื้นเอียง (mg sinθ > fs(max))";
-                stateColor = "#059669";
-            } else {
-                stateText = "สภาวะ: วัตถุอยู่นิ่งบนพื้นเอียง (mg sinθ ≤ fs(max))";
-                stateColor = "#64748b";
+            // 8. สัญลักษณ์แรงลัพธ์ ΣF และความเร่ง a บนภาพ
+            const isMovingI = Math.abs(sI.v) > 0.05 || (phys.F_gx > phys.fs_max && Math.abs(phys.a) > 0 && sI.isRunning);
+            drawPhysicsText(ctx, `ΣF = ${Math.abs(phys.Fnet).toFixed(1)} N`, w - 24, 25, isMovingI ? '#0284c7' : '#64748b', 'bold 14px Sarabun, sans-serif', 'right', 'top');
+            if (isMovingI && Math.abs(phys.a) > 0) {
+                drawPhysicsText(ctx, `a = ${Math.abs(phys.a).toFixed(2)} m/s²`, w - 24, 46, '#7c3aed', 'bold 14px Sarabun, sans-serif', 'right', 'top');
             }
-            drawPhysicsText(ctx, stateText, w - 24, 25, stateColor, 'bold 14px Sarabun, sans-serif', 'right', 'top');
         }
 
         function loopI(timestamp) {
