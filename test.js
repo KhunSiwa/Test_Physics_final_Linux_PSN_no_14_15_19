@@ -43,15 +43,22 @@ const dom = {
 global.document = dom;
 global.window = { addEventListener: () => {} };
 global.requestAnimationFrame = () => {};
+global.cancelAnimationFrame = () => {};
 global.performance = { now: () => 1000 };
 
-// เปิดเผย sH, sI, calcH, calcI, drawH, drawI สู่ global scope เพื่อการทดสอบ
+// เปิดเผยตัวแปรสู่ global scope เพื่อการทดสอบ
 js = js.replace('const sH =', 'global.sH =');
 js = js.replace('const sI =', 'global.sI =');
 js = js.replace('function calcH()', 'global.calcH = function()');
 js = js.replace('function calcI()', 'global.calcI = function()');
 js = js.replace('function drawH()', 'global.drawH = function()');
 js = js.replace('function drawI()', 'global.drawI = function()');
+js = js.replace('function loopH(timestamp)', 'global.loopH = function(timestamp)');
+js = js.replace('function loopI(timestamp)', 'global.loopI = function(timestamp)');
+js = js.replace('function togglePlayH()', 'global.togglePlayH = function()');
+js = js.replace('function togglePlayI()', 'global.togglePlayI = function()');
+js = js.replace('function resetH()', 'global.resetH = function()');
+js = js.replace('function resetI()', 'global.resetI = function()');
 
 eval(js);
 
@@ -64,7 +71,7 @@ global.sH.inF.value = "10";
 global.sH.inUs.value = "0.4";
 global.sH.inUk.value = "0.2";
 global.sH.inG.value = "10";
-global.sH.v = 0; // เริ่มจากหยุดนิ่ง
+global.sH.v = 0;
 
 const resA = global.calcH();
 console.log(`- แรงปฏิกิริยาตั้งฉาก N = ${resA.N} N (คาดหวัง 20 N)`);
@@ -151,13 +158,88 @@ assert(resD.a > 0, "ความเร่งต้องมากกว่า 0"
 console.log("✓ กรณี D ผ่านการทดสอบถูกต้อง 100%\n");
 
 // -------------------------------------------------------------
-// ตรวจสอบการวาด Canvas
+// การทดสอบพฤติกรรม Animation: การหยุดที่ปลายพื้น ไม่วนซ้ำ และเริ่มใหม่
 // -------------------------------------------------------------
-console.log("--- ทดสอบการวาด Canvas ทั้งสองโหมด ---");
-global.drawH();
-console.log("- drawH() วาดสำเร็จ");
-global.drawI();
-console.log("- drawI() วาดสำเร็จ");
-console.log("✓ การวาด Canvas ทำงานสมบูรณ์ 100%\n");
+console.log("--- ทดสอบพฤติกรรม Animation: การหยุดที่ปลายพื้น ไม่วนซ้ำ และเริ่มใหม่ ---");
 
-console.log("🎉 ทุกการทดสอบผ่านฉลุย (All 4 Physics Test Cases Passed)!");
+// ทดสอบพื้นเอียง (Inclined Plane Stop & Restart)
+global.resetI();
+global.sI.inM.value = "2";
+global.sI.inTh.value = "30";
+global.sI.inUs.value = "0.4";
+global.sI.inUk.value = "0.2";
+global.sI.inG.value = "10";
+
+console.log("1. กดเริ่มการทดลองพื้นเอียง");
+global.togglePlayI();
+assert.strictEqual(global.sI.isRunning, true, "sI ต้องกำลังรันอยู่");
+assert.strictEqual(global.sI.isFinished, false, "sI.isFinished ต้องเป็น false ตอนเริ่ม");
+
+console.log("2. ให้เวลาเคลื่อนที่จนถึงปลายพื้นเอียง");
+let simTime = 1000;
+for (let step = 0; step < 200; step++) {
+    simTime += 50;
+    if (global.sI.isRunning) {
+        global.loopI(simTime);
+    }
+}
+
+console.log(`- สถานะหลังถึงปลายพื้น: isFinished = ${global.sI.isFinished}, isRunning = ${global.sI.isRunning}, v = ${global.sI.v}`);
+assert.strictEqual(global.sI.isFinished, true, "sI.isFinished ต้องเป็น true เมื่อถึงปลายพื้น");
+assert.strictEqual(global.sI.isRunning, false, "sI.isRunning ต้องหยุด (false) เมื่อถึงปลายพื้น");
+assert.strictEqual(global.sI.v, 0, "ความเร็วต้องเป็น 0 เมื่อหยุดที่ปลายพื้น");
+assert(global.sI.statTxt.textContent.includes("การทดลองเสร็จสิ้น — วัตถุถึงปลายพื้นเอียง"), "ข้อความสถานะต้องระบุว่าการทดลองเสร็จสิ้น — วัตถุถึงปลายพื้นเอียง");
+
+const stoppedDistI = global.sI.dist;
+console.log("3. ตรวจสอบว่า Animation ไม่วนซ้ำ แม้เวลาเดินต่อ");
+global.loopI(simTime + 50);
+assert.strictEqual(global.sI.dist, stoppedDistI, "ตำแหน่งต้องไม่เปลี่ยนหรือวนซ้ำ");
+assert.strictEqual(global.sI.isRunning, false, "ต้องไม่รันต่อ");
+
+console.log("4. ทดสอบกด 'เริ่มการทดลอง' อีกครั้งหลังหยุด");
+global.togglePlayI();
+assert.strictEqual(global.sI.dist, 0, "ตำแหน่งต้องเริ่มใหม่จาก 0");
+assert.strictEqual(global.sI.isFinished, false, "isFinished ต้องรีเซ็ตเป็น false");
+assert.strictEqual(global.sI.isRunning, true, "ต้องเริ่มรันรอบใหม่ได้");
+global.resetI();
+assert.strictEqual(global.sI.isRunning, false, "resetI ต้องหยุดการทำงาน");
+assert.strictEqual(global.sI.dist, 0, "resetI ต้องคืนค่าระยะทางเป็น 0");
+console.log("✓ ระบบ Animation พื้นเอียงหยุดที่ปลายพื้นอย่างถูกต้อง ไม่วนซ้ำ และเริ่มใหม่ได้สมบูรณ์\n");
+
+// ทดสอบพื้นราบ (Horizontal Plane Stop & Restart)
+global.resetH();
+global.sH.inM.value = "2";
+global.sH.inF.value = "10";
+global.sH.inUs.value = "0.4";
+global.sH.inUk.value = "0.2";
+global.sH.inG.value = "10";
+
+console.log("5. กดเริ่มการทดลองพื้นราบ");
+global.togglePlayH();
+assert.strictEqual(global.sH.isRunning, true, "sH ต้องกำลังรันอยู่");
+
+console.log("6. ให้เวลาเคลื่อนที่จนถึงจุดสิ้นสุดพื้นราบ");
+simTime = 1000;
+for (let step = 0; step < 200; step++) {
+    simTime += 50;
+    if (global.sH.isRunning) {
+        global.loopH(simTime);
+    }
+}
+
+console.log(`- สถานะหลังถึงจุดสิ้นสุด: isFinished = ${global.sH.isFinished}, isRunning = ${global.sH.isRunning}, v = ${global.sH.v}`);
+assert.strictEqual(global.sH.isFinished, true, "sH.isFinished ต้องเป็น true เมื่อถึงจุดสิ้นสุด");
+assert.strictEqual(global.sH.isRunning, false, "sH.isRunning ต้องหยุด (false)");
+assert.strictEqual(global.sH.v, 0, "ความเร็วต้องเป็น 0");
+assert(global.sH.statTxt.textContent.includes("การทดลองเสร็จสิ้น — วัตถุถึงจุดสิ้นสุดของพื้นราบ"), "ข้อความสถานะต้องระบุว่าการทดลองเสร็จสิ้น");
+
+console.log("7. ทดสอบกด 'เริ่มการทดลอง' อีกครั้งในพื้นราบ");
+global.togglePlayH();
+assert.strictEqual(global.sH.dist, 0, "ตำแหน่งพื้นราบต้องเริ่มใหม่จาก 0");
+assert.strictEqual(global.sH.isRunning, true, "ต้องเริ่มรันรอบใหม่ได้");
+global.resetH();
+assert.strictEqual(global.sH.isRunning, false, "resetH ต้องหยุดการทำงาน");
+assert.strictEqual(global.sH.dist, 0, "resetH ต้องคืนค่าระยะทางเป็น 0");
+console.log("✓ ระบบ Animation พื้นราบหยุดที่จุดสิ้นสุดอย่างถูกต้อง ไม่วนซ้ำ และเริ่มใหม่ได้สมบูรณ์\n");
+
+console.log("🎉 ทุกการทดสอบผ่านฉลุย 100% (All Physics & Animation Tests Passed)!");

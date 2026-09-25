@@ -748,7 +748,9 @@
         const sH = {
             isRunning: false,
             lastTime: 0,
-            x: 0, v: 0,
+            dist: 0, v: 0,
+            isFinished: false,
+            rafId: null,
             
             cvs: document.getElementById('canvas-h'),
             ctx: document.getElementById('canvas-h').getContext('2d'),
@@ -841,22 +843,30 @@
             sH.outA.textContent = (Math.abs(phys.a) < 1e-4 ? 0 : phys.a).toFixed(2);
             sH.outV.textContent = (Math.abs(sH.v) < 1e-4 ? 0 : sH.v).toFixed(2);
 
-            const isMoving = Math.abs(sH.v) > 0.05 || (Math.abs(phys.F_app) > phys.fs_max && Math.abs(phys.a) > 0);
-
-            if (isMoving) {
-                sH.statInd.className = "w-3 h-3 rounded-full bg-emerald-500 animate-pulse";
-                sH.statTxt.textContent = "สถานะ: วัตถุเคลื่อนที่";
-                sH.badge.className = "text-xs font-semibold px-3 py-1 rounded-full bg-emerald-100 text-emerald-800";
-                sH.badge.textContent = "วัตถุเคลื่อนที่";
-                sH.resStatus.textContent = "วัตถุเคลื่อนที่";
-                sH.desc.textContent = "วัตถุเริ่มเคลื่อนที่ เพราะแรงที่ทำให้วัตถุเคลื่อนที่มากกว่าแรงเสียดทานสถิตสูงสุด";
+            if (sH.isFinished) {
+                sH.statInd.className = "w-3 h-3 rounded-full bg-blue-500";
+                sH.statTxt.textContent = "การทดลองเสร็จสิ้น — วัตถุถึงจุดสิ้นสุดของพื้นราบ";
+                sH.badge.className = "text-xs font-semibold px-3 py-1 rounded-full bg-blue-100 text-blue-800";
+                sH.badge.textContent = "การทดลองเสร็จสิ้น";
+                sH.resStatus.textContent = "การทดลองเสร็จสิ้น (วัตถุถึงจุดสิ้นสุดของพื้นราบ)";
+                sH.desc.textContent = "การทดลองเสร็จสิ้น — วัตถุเคลื่อนที่จนถึงจุดสิ้นสุดของพื้นราบแล้ว ความเร็วเป็น 0 m/s";
             } else {
-                sH.statInd.className = "w-3 h-3 rounded-full bg-slate-400";
-                sH.statTxt.textContent = "สถานะ: วัตถุไม่เคลื่อนที่";
-                sH.badge.className = "text-xs font-semibold px-3 py-1 rounded-full bg-slate-100 text-slate-700";
-                sH.badge.textContent = "วัตถุไม่เคลื่อนที่";
-                sH.resStatus.textContent = "วัตถุไม่เคลื่อนที่";
-                sH.desc.textContent = "วัตถุไม่เคลื่อนที่ เพราะแรงที่พยายามทำให้วัตถุเคลื่อนที่ยังไม่มากกว่าแรงเสียดทานสถิตสูงสุด";
+                const isMoving = Math.abs(sH.v) > 0.05 || (Math.abs(phys.F_app) > phys.fs_max && Math.abs(phys.a) > 0 && sH.isRunning);
+                if (isMoving) {
+                    sH.statInd.className = "w-3 h-3 rounded-full bg-emerald-500 animate-pulse";
+                    sH.statTxt.textContent = "สถานะ: วัตถุกำลังเคลื่อนที่";
+                    sH.badge.className = "text-xs font-semibold px-3 py-1 rounded-full bg-emerald-100 text-emerald-800";
+                    sH.badge.textContent = "วัตถุกำลังเคลื่อนที่";
+                    sH.resStatus.textContent = "วัตถุกำลังเคลื่อนที่";
+                    sH.desc.textContent = "วัตถุเริ่มเคลื่อนที่ เพราะแรงที่ทำให้วัตถุเคลื่อนที่มากกว่าแรงเสียดทานสถิตสูงสุด";
+                } else {
+                    sH.statInd.className = "w-3 h-3 rounded-full bg-slate-400";
+                    sH.statTxt.textContent = "สถานะ: วัตถุไม่เคลื่อนที่";
+                    sH.badge.className = "text-xs font-semibold px-3 py-1 rounded-full bg-slate-100 text-slate-700";
+                    sH.badge.textContent = "วัตถุไม่เคลื่อนที่";
+                    sH.resStatus.textContent = "วัตถุไม่เคลื่อนที่";
+                    sH.desc.textContent = "วัตถุไม่เคลื่อนที่ เพราะแรงที่พยายามทำให้วัตถุเคลื่อนที่ยังไม่มากกว่าแรงเสียดทานสถิตสูงสุด";
+                }
             }
 
             sH.resFnet.textContent = Math.abs(phys.Fnet).toFixed(2);
@@ -930,21 +940,12 @@
             // 1. วาดพื้นดินแนวนอนพร้อมลายแรเงาแบบชีทฟิสิกส์
             drawHatchGround(ctx, 20, w - 20, baseY, 14, 18);
 
-            // 2. คำนวณพิกัดกล่อง
-            const scale = 35;
-            const centerX = w / 2;
-            let boxCenterX = centerX + sH.x * scale;
-            
-            // ป้องกันกล่องหลุดจอ ให้วนรอบอย่างราบรื่น
-            const minX = 70;
-            const maxX = w - 70;
-            if (boxCenterX > maxX) {
-                sH.x = (minX - centerX) / scale;
-                boxCenterX = minX;
-            } else if (boxCenterX < minX) {
-                sH.x = (maxX - centerX) / scale;
-                boxCenterX = maxX;
-            }
+            // 2. คำนวณพิกัดกล่อง (เริ่มต้นจากซ้าย เลื่อนไปจนถึงปลายพื้นขวา)
+            const boxStartX = 80 + boxW / 2;
+            const boxEndX = (w - 40) - boxW / 2;
+            const maxDist = Math.max(10, boxEndX - boxStartX);
+            const currentDist = Math.min(maxDist, Math.max(0, sH.dist || 0));
+            const boxCenterX = boxStartX + currentDist;
 
             const boxLeft = boxCenterX - boxW / 2;
             const boxTop = baseY - boxH;
@@ -986,7 +987,7 @@
             // 4.4 แรงเสียดทาน f (แนบที่ผิวสัมผัสพื้น ชี้ต้านแรง F)
             if (Math.abs(phys.f) > 0.05) {
                 const lenFric = Math.min(125, Math.max(30, Math.abs(phys.f) * vScale));
-                const isMove = Math.abs(sH.v) > 0.05 || (Math.abs(phys.F_app) > phys.fs_max && Math.abs(phys.a) > 0);
+                const isMove = Math.abs(sH.v) > 0.05 || (Math.abs(phys.F_app) > phys.fs_max && Math.abs(phys.a) > 0 && sH.isRunning);
                 const labelFric = isMove 
                     ? `fk = ${phys.fk.toFixed(1)} N (แรงเสียดทานจลน์)` 
                     : `fs = ${Math.abs(phys.f).toFixed(1)} N (แรงเสียดทานสถิต)`;
@@ -996,8 +997,8 @@
                 drawVectorArrow(ctx, fricStartX, baseY - 2, fricStartX + fricDir * lenFric, baseY - 2, '#dc2626', labelFric, fricDir > 0 ? 'right' : 'left', 12);
             }
 
-            // 4.5 ลูกศรแสดงทิศทางการเคลื่อนที่ (แสดงเฉพาะเมื่อวัตถุเคลื่อนที่จริง)
-            if (Math.abs(sH.v) > 0.05) {
+            // 4.5 ลูกศรแสดงทิศทางการเคลื่อนที่ (แสดงเฉพาะเมื่อวัตถุกำลังเคลื่อนที่จริง)
+            if (Math.abs(sH.v) > 0.05 && !sH.isFinished) {
                 const dirV = Math.sign(sH.v);
                 const lenV = Math.min(80, Math.max(30, Math.abs(sH.v) * 12));
                 const vY = boxTop - 25;
@@ -1005,11 +1006,18 @@
             }
 
             // 5. ป้ายสถานะจำลองในรูป
-            const isMovingState = Math.abs(sH.v) > 0.05 || (Math.abs(phys.F_app) > phys.fs_max && Math.abs(phys.a) > 0);
-            const stateText = isMovingState 
-                ? "สภาวะ: วัตถุกำลังเคลื่อนที่ (F > fs(max))" 
-                : "สภาวะ: วัตถุอยู่นิ่ง (F ≤ fs(max))";
-            const stateColor = isMovingState ? '#059669' : '#64748b';
+            let stateText = "";
+            let stateColor = "";
+            if (sH.isFinished) {
+                stateText = "การทดลองเสร็จสิ้น — วัตถุถึงจุดสิ้นสุดของพื้นราบ";
+                stateColor = "#2563eb";
+            } else if (Math.abs(sH.v) > 0.05 || (Math.abs(phys.F_app) > phys.fs_max && Math.abs(phys.a) > 0 && sH.isRunning)) {
+                stateText = "สภาวะ: วัตถุกำลังเคลื่อนที่ (F > fs(max))";
+                stateColor = "#059669";
+            } else {
+                stateText = "สภาวะ: วัตถุอยู่นิ่ง (F ≤ fs(max))";
+                stateColor = "#64748b";
+            }
             drawPhysicsText(ctx, stateText, w - 24, 25, stateColor, 'bold 14px Sarabun, sans-serif', 'right', 'top');
         }
 
@@ -1021,8 +1029,13 @@
 
             const steps = 4;
             const sub_dt = dt / steps;
-            
-            for(let i=0; i<steps; i++) {
+            const w = sH.cvs.width || 600;
+            const boxW = 86;
+            const boxStartX = 80 + boxW / 2;
+            const boxEndX = (w - 40) - boxW / 2;
+            const maxDist = Math.max(10, boxEndX - boxStartX);
+
+            for (let i = 0; i < steps; i++) {
                 const phys = calcH();
                 let prevV = sH.v;
                 sH.v += phys.a * sub_dt;
@@ -1032,15 +1045,32 @@
                     sH.v = 0;
                 }
                 
-                sH.x += sH.v * sub_dt;
-                if (sH.x > 18) sH.x = -18; // วนกลับ
-                if (sH.x < -18) sH.x = 18;
+                const scale = 30; // สเกลการเคลื่อนที่
+                sH.dist += sH.v * sub_dt * scale;
+
+                // เมื่อถึงจุดสิ้นสุดของพื้นราบ ให้หยุดทันที
+                if (sH.dist >= maxDist) {
+                    sH.dist = maxDist;
+                    sH.v = 0;
+                    sH.isRunning = false;
+                    sH.isFinished = true;
+                    sH.btnPlay.style.display = 'flex';
+                    sH.btnPause.style.display = 'none';
+                    if (sH.rafId) {
+                        cancelAnimationFrame(sH.rafId);
+                        sH.rafId = null;
+                    }
+                    break;
+                }
             }
 
             const currentPhys = calcH();
             updateUIH(currentPhys);
             drawH();
-            requestAnimationFrame(loopH);
+
+            if (sH.isRunning) {
+                sH.rafId = requestAnimationFrame(loopH);
+            }
         }
 
         function readInputsH() {
@@ -1054,7 +1084,7 @@
             sH.valUk.textContent = sH.inUk.value;
             sH.valG.textContent = sH.inG.value + ' m/s²';
             
-            if(!sH.isRunning) {
+            if (!sH.isRunning) {
                 updateUIH(calcH());
                 drawH();
             }
@@ -1063,24 +1093,44 @@
         [sH.inM, sH.inF, sH.inUs, sH.inUk, sH.inG].forEach(el => el.addEventListener('input', readInputsH));
 
         function togglePlayH() {
+            if (sH.isFinished) {
+                // ถ้าเคยทำการทดลองเสร็จแล้ว กดเริ่มใหม่จากจุดเริ่มต้น
+                sH.dist = 0;
+                sH.v = 0;
+                sH.isFinished = false;
+            }
+
             sH.isRunning = !sH.isRunning;
             if (sH.isRunning) {
                 sH.btnPlay.style.display = 'none';
                 sH.btnPause.style.display = 'flex';
                 sH.btnPause.classList.remove('hidden');
                 sH.lastTime = performance.now();
-                requestAnimationFrame(loopH);
+                if (sH.rafId) cancelAnimationFrame(sH.rafId);
+                sH.rafId = requestAnimationFrame(loopH);
             } else {
                 sH.btnPlay.style.display = 'flex';
                 sH.btnPause.style.display = 'none';
+                if (sH.rafId) {
+                    cancelAnimationFrame(sH.rafId);
+                    sH.rafId = null;
+                }
             }
+            updateUIH(calcH());
+            drawH();
         }
 
         function resetH() {
             sH.isRunning = false;
+            sH.isFinished = false;
+            if (sH.rafId) {
+                cancelAnimationFrame(sH.rafId);
+                sH.rafId = null;
+            }
             sH.btnPlay.style.display = 'flex';
             sH.btnPause.style.display = 'none';
-            sH.x = 0; sH.v = 0;
+            sH.dist = 0;
+            sH.v = 0;
             readInputsH();
         }
 
@@ -1095,7 +1145,9 @@
         const sI = {
             isRunning: false,
             lastTime: 0,
-            x: 0, v: 0,
+            dist: 0, v: 0,
+            isFinished: false,
+            rafId: null,
             
             cvs: document.getElementById('canvas-i'),
             ctx: document.getElementById('canvas-i').getContext('2d'),
@@ -1192,22 +1244,30 @@
             sI.outA.textContent = (Math.abs(phys.a) < 1e-4 ? 0 : phys.a).toFixed(2);
             sI.outV.textContent = (Math.abs(sI.v) < 1e-4 ? 0 : sI.v).toFixed(2);
 
-            const isMoving = Math.abs(sI.v) > 0.05 || (phys.F_gx > phys.fs_max && Math.abs(phys.a) > 0);
-
-            if (isMoving) {
-                sI.statInd.className = "w-3 h-3 rounded-full bg-emerald-500 animate-pulse";
-                sI.statTxt.textContent = "สถานะ: วัตถุเคลื่อนที่ลงตามพื้นเอียง";
-                sI.badge.className = "text-xs font-semibold px-3 py-1 rounded-full bg-emerald-100 text-emerald-800";
-                sI.badge.textContent = "วัตถุเคลื่อนที่ลงตามพื้นเอียง";
-                sI.resStatus.textContent = "วัตถุเคลื่อนที่ลงตามพื้นเอียง";
-                sI.desc.textContent = "วัตถุเคลื่อนที่ลงตามพื้นเอียง เพราะองค์ประกอบของแรงโน้มถ่วงตามแนวพื้นเอียงมากกว่าแรงเสียดทานสถิตสูงสุด";
+            if (sI.isFinished) {
+                sI.statInd.className = "w-3 h-3 rounded-full bg-blue-500";
+                sI.statTxt.textContent = "การทดลองเสร็จสิ้น — วัตถุถึงปลายพื้นเอียง";
+                sI.badge.className = "text-xs font-semibold px-3 py-1 rounded-full bg-blue-100 text-blue-800";
+                sI.badge.textContent = "การทดลองเสร็จสิ้น";
+                sI.resStatus.textContent = "การทดลองเสร็จสิ้น (วัตถุถึงปลายพื้นเอียง)";
+                sI.desc.textContent = "การทดลองเสร็จสิ้น — วัตถุเคลื่อนที่ไถลลงมาจนถึงปลายพื้นเอียงแล้ว ความเร็วเป็น 0 m/s";
             } else {
-                sI.statInd.className = "w-3 h-3 rounded-full bg-slate-400";
-                sI.statTxt.textContent = "สถานะ: วัตถุไม่เคลื่อนที่";
-                sI.badge.className = "text-xs font-semibold px-3 py-1 rounded-full bg-slate-100 text-slate-700";
-                sI.badge.textContent = "วัตถุไม่เคลื่อนที่";
-                sI.resStatus.textContent = "วัตถุไม่เคลื่อนที่";
-                sI.desc.textContent = "วัตถุไม่เคลื่อนที่ เพราะองค์ประกอบของแรงโน้มถ่วงตามแนวพื้นเอียงยังไม่มากกว่าแรงเสียดทานสถิตสูงสุด";
+                const isMoving = Math.abs(sI.v) > 0.05 || (phys.F_gx > phys.fs_max && Math.abs(phys.a) > 0 && sI.isRunning);
+                if (isMoving) {
+                    sI.statInd.className = "w-3 h-3 rounded-full bg-emerald-500 animate-pulse";
+                    sI.statTxt.textContent = "สถานะ: วัตถุกำลังไถลลงตามพื้นเอียง";
+                    sI.badge.className = "text-xs font-semibold px-3 py-1 rounded-full bg-emerald-100 text-emerald-800";
+                    sI.badge.textContent = "วัตถุเคลื่อนที่ลงตามพื้นเอียง";
+                    sI.resStatus.textContent = "วัตถุเคลื่อนที่ลงตามพื้นเอียง";
+                    sI.desc.textContent = "วัตถุเคลื่อนที่ลงตามพื้นเอียง เพราะองค์ประกอบของแรงโน้มถ่วงตามแนวพื้นเอียงมากกว่าแรงเสียดทานสถิตสูงสุด";
+                } else {
+                    sI.statInd.className = "w-3 h-3 rounded-full bg-slate-400";
+                    sI.statTxt.textContent = "สถานะ: วัตถุไม่เคลื่อนที่";
+                    sI.badge.className = "text-xs font-semibold px-3 py-1 rounded-full bg-slate-100 text-slate-700";
+                    sI.badge.textContent = "วัตถุไม่เคลื่อนที่";
+                    sI.resStatus.textContent = "วัตถุไม่เคลื่อนที่";
+                    sI.desc.textContent = "วัตถุไม่เคลื่อนที่ เพราะองค์ประกอบของแรงโน้มถ่วงตามแนวพื้นเอียงยังไม่มากกว่าแรงเสียดทานสถิตสูงสุด";
+                }
             }
 
             sI.resFnet.textContent = Math.abs(phys.Fnet).toFixed(2);
@@ -1345,19 +1405,11 @@
             // 5. ตำแหน่งของกล่องบนพื้นเอียง
             const boxW = 80;
             const boxH = 55;
-            const minS = 40;
-            const maxS = L - 50;
-
-            const baseS = minS + (maxS - minS) * 0.25;
-            let currS = baseS + sI.x * 25;
-
-            // ถ้ารูดลงไปใกล้สุดทางลาด ให้วนกลับมาเริ่มใหม่
-            if (currS > maxS) {
-                sI.x = 0;
-                currS = baseS;
-            } else if (currS < minS) {
-                currS = minS;
-            }
+            const minS = boxW / 2 + 10;
+            const maxS = L - boxW / 2;
+            const maxTravel = Math.max(10, maxS - minS);
+            const currentDist = Math.min(maxTravel, Math.max(0, sI.dist || 0));
+            const currS = minS + currentDist;
 
             // จุดสัมผัสกึ่งกลางใต้กล่องบนผิวทางลาด
             const pContact = {
@@ -1371,7 +1423,7 @@
                 y: pContact.y + (boxH / 2) * uOut.y
             };
 
-            // 6. วาดกล่องวัตถุบนพื้นเอียง (แนบสนิทกับผิวทางลาด)
+            // 6. วาดกล่องวัตถุบนพื้นเอียง (แนบสนิทกับผิวทางลาด ไม่หลุดหรือจม)
             ctx.save();
             ctx.translate(pBox.x, pBox.y);
             ctx.rotate(thRad);
@@ -1450,7 +1502,7 @@
             // 7.7 แรงเสียดทาน f (แนบตามแนวผิวทางลาด ชี้ขึ้นต้านการไถล)
             if (Math.abs(phys.f) > 0.05) {
                 const lenFric = Math.min(115, Math.max(30, (Math.abs(phys.f) / phys.W) * lenMg));
-                const isMove = Math.abs(sI.v) > 0.05 || (phys.F_gx > phys.fs_max && Math.abs(phys.a) > 0);
+                const isMove = Math.abs(sI.v) > 0.05 || (phys.F_gx > phys.fs_max && Math.abs(phys.a) > 0 && sI.isRunning);
                 const labelFric = isMove 
                     ? `fk = ${phys.fk.toFixed(1)} N (แรงเสียดทานจลน์)` 
                     : `fs = ${Math.abs(phys.f).toFixed(1)} N (แรงเสียดทานสถิต)`;
@@ -1462,8 +1514,8 @@
                 drawVectorArrow(ctx, pContact.x, pContact.y, tipFric.x, tipFric.y, '#dc2626', labelFric, 'left', 12);
             }
 
-            // 7.8 ลูกศรแสดงทิศทางการเคลื่อนที่ (เฉพาะเมื่อเคลื่อนที่)
-            if (Math.abs(sI.v) > 0.05) {
+            // 7.8 ลูกศรแสดงทิศทางการเคลื่อนที่ (เฉพาะเมื่อวัตถุกำลังเคลื่อนที่จริง)
+            if (Math.abs(sI.v) > 0.05 && !sI.isFinished) {
                 const lenV = Math.min(75, Math.max(30, Math.abs(sI.v) * 10));
                 const vStart = {
                     x: pBox.x + (boxH / 2 + 18) * uOut.x,
@@ -1477,11 +1529,18 @@
             }
 
             // 8. ป้ายบอกสภาวะในรูป
-            const isMovingState = Math.abs(sI.v) > 0.05 || (phys.F_gx > phys.fs_max && Math.abs(phys.a) > 0);
-            const stateText = isMovingState 
-                ? "สภาวะ: วัตถุกำลังไถลลงตามพื้นเอียง (mg sinθ > fs(max))" 
-                : "สภาวะ: วัตถุอยู่นิ่งบนพื้นเอียง (mg sinθ ≤ fs(max))";
-            const stateColor = isMovingState ? '#059669' : '#64748b';
+            let stateText = "";
+            let stateColor = "";
+            if (sI.isFinished) {
+                stateText = "การทดลองเสร็จสิ้น — วัตถุถึงปลายพื้นเอียง";
+                stateColor = "#2563eb";
+            } else if (Math.abs(sI.v) > 0.05 || (phys.F_gx > phys.fs_max && Math.abs(phys.a) > 0 && sI.isRunning)) {
+                stateText = "สภาวะ: วัตถุกำลังไถลลงตามพื้นเอียง (mg sinθ > fs(max))";
+                stateColor = "#059669";
+            } else {
+                stateText = "สภาวะ: วัตถุอยู่นิ่งบนพื้นเอียง (mg sinθ ≤ fs(max))";
+                stateColor = "#64748b";
+            }
             drawPhysicsText(ctx, stateText, w - 24, 25, stateColor, 'bold 14px Sarabun, sans-serif', 'right', 'top');
         }
 
@@ -1493,9 +1552,21 @@
 
             const steps = 4;
             const sub_dt = dt / steps;
-            
-            for(let i=0; i<steps; i++) {
-                const phys = calcI();
+
+            const w = sI.cvs.width || 600;
+            const h = sI.cvs.height || 400;
+            const phys = calcI();
+            const sinTh = Math.sin(phys.thRad);
+            const cosTh = Math.cos(phys.thRad);
+            const maxW = w * 0.64;
+            const maxH = h * 0.62;
+            const L = Math.min(520, Math.max(220, Math.min(maxW / cosTh, maxH / sinTh)));
+            const boxW = 80;
+            const minS = boxW / 2 + 10;
+            const maxS = L - boxW / 2;
+            const maxTravel = Math.max(10, maxS - minS);
+
+            for (let i = 0; i < steps; i++) {
                 let prevV = sI.v;
                 sI.v += phys.a * sub_dt;
                 
@@ -1504,15 +1575,31 @@
                     sI.v = 0;
                 }
                 
-                sI.x += sI.v * sub_dt;
-                // ถ้ากล่องไถลเลยช่วงทางลาด ให้วนกลับมาด้านบนอย่างราบรื่น
-                if (sI.x > 18) sI.x = 0; 
-                if (sI.x < -2) sI.x = 0;
+                const scale = 25; // สเกลการเคลื่อนที่
+                sI.dist += sI.v * sub_dt * scale;
+
+                // เมื่อถึงปลายพื้นเอียง ให้หยุดทันที
+                if (sI.dist >= maxTravel) {
+                    sI.dist = maxTravel;
+                    sI.v = 0;
+                    sI.isRunning = false;
+                    sI.isFinished = true;
+                    sI.btnPlay.style.display = 'flex';
+                    sI.btnPause.style.display = 'none';
+                    if (sI.rafId) {
+                        cancelAnimationFrame(sI.rafId);
+                        sI.rafId = null;
+                    }
+                    break;
+                }
             }
 
             updateUII(calcI());
             drawI();
-            requestAnimationFrame(loopI);
+
+            if (sI.isRunning) {
+                sI.rafId = requestAnimationFrame(loopI);
+            }
         }
 
         function readInputsI() {
@@ -1526,7 +1613,7 @@
             sI.valUk.textContent = sI.inUk.value;
             sI.valG.textContent = sI.inG.value + ' m/s²';
             
-            if(!sI.isRunning) {
+            if (!sI.isRunning) {
                 updateUII(calcI());
                 drawI();
             }
@@ -1535,24 +1622,44 @@
         [sI.inM, sI.inTh, sI.inUs, sI.inUk, sI.inG].forEach(el => el.addEventListener('input', readInputsI));
 
         function togglePlayI() {
+            if (sI.isFinished) {
+                // ถ้าเคยทำการทดลองเสร็จแล้ว กดเริ่มใหม่จากจุดเริ่มต้น
+                sI.dist = 0;
+                sI.v = 0;
+                sI.isFinished = false;
+            }
+
             sI.isRunning = !sI.isRunning;
             if (sI.isRunning) {
                 sI.btnPlay.style.display = 'none';
                 sI.btnPause.style.display = 'flex';
                 sI.btnPause.classList.remove('hidden');
                 sI.lastTime = performance.now();
-                requestAnimationFrame(loopI);
+                if (sI.rafId) cancelAnimationFrame(sI.rafId);
+                sI.rafId = requestAnimationFrame(loopI);
             } else {
                 sI.btnPlay.style.display = 'flex';
                 sI.btnPause.style.display = 'none';
+                if (sI.rafId) {
+                    cancelAnimationFrame(sI.rafId);
+                    sI.rafId = null;
+                }
             }
+            updateUII(calcI());
+            drawI();
         }
 
         function resetI() {
             sI.isRunning = false;
+            sI.isFinished = false;
+            if (sI.rafId) {
+                cancelAnimationFrame(sI.rafId);
+                sI.rafId = null;
+            }
             sI.btnPlay.style.display = 'flex';
             sI.btnPause.style.display = 'none';
-            sI.x = 0; sI.v = 0;
+            sI.dist = 0;
+            sI.v = 0;
             readInputsI();
         }
 
